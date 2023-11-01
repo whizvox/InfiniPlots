@@ -1,0 +1,24 @@
+# Gradle
+/.gradle
+/build
+
+# IntelliJ
+/.idea
+*.iml
+*.ipr
+
+# Eclipse
+.metadata
+/bin
+/tmp
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# InfiniPlots run directory
+/run

@@ -1,0 +1,73 @@
+plugins {
+  id 'java'
+}
+
+group = 'me.whizvox'
+version = '1.0-SNAPSHOT'
+
+repositories {
+  mavenCentral()
+  maven {
+    name = "spigotmc-repo"
+    url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
+  }
+  maven {
+    name = "sonatype"
+    url = "https://oss.sonatype.org/content/groups/public/"
+  }
+}
+
+dependencies {
+  compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
+  implementation 'org.xerial:sqlite-jdbc:3.43.2.1'
+}
+
+def targetJavaVersion = 17
+java {
+  def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+  sourceCompatibility = javaVersion
+  targetCompatibility = javaVersion
+  if (JavaVersion.current() < javaVersion) {
+    toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+  }
+}
+
+tasks.withType(JavaCompile).configureEach {
+  if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+    options.release = targetJavaVersion
+  }
+}
+
+processResources {
+  def props = [version: version]
+  inputs.properties props
+  filteringCharset 'UTF-8'
+  filesMatching('plugin.yml') {
+    expand props
+  }
+}
+
+/* ========================== *
+ *  InfiniPlots custom tasks  *
+ * ========================== */
+
+// These are for a specific workflow which automatically compiles the project into a JAR file, followed by copying this
+// JAR file into the /run/plugins directory. I also have a custom IntelliJ run configuration which calls the copyToRun
+// task before executing an external Spigot JAR file, using the /run directory as the working directory.
+
+// delete the old plugin jar
+tasks.register("cleanOldLibs", Delete) {
+  delete fileTree("${projectDir}/run/plugins").matching {
+    include "${archivesBaseName}-*.jar"
+  }
+}
+
+// copy the built jar into the /run/plugins directory
+tasks.register('copyToRun', Copy) {
+  from "${buildDir}/libs/${archivesBaseName}-${version}.jar"
+  into "${projectDir}/run/plugins"
+}
+
+// be sure to build the jar file and delete the old plugin before copying
+copyToRun.dependsOn cleanOldLibs
+copyToRun.dependsOn jar

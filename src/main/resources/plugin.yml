@@ -1,0 +1,18 @@
+name: InfiniPlots
+version: '${version}'
+main: me.whizvox.infiniplots.InfiniPlots
+api-version: '1.20'
+author: whizvox
+description: Plots plugin
+commands:
+  infiniplotsadmin:
+    description: Admin command for InfiniPlots
+    usage: /infiniplotsadmin <genworld>
+    permission: infiniplots.admin
+    aliases:
+      - infpa
+  infiniplots:
+    description: Generale usage command for InfiniPlots
+    usage: /infiniplots <tp | tpo | tpi | tpw | claim | claimhere | info>
+    aliases:
+      - infp
