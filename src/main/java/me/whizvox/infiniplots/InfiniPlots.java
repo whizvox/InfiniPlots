@@ -47,13 +47,12 @@ public final class InfiniPlots extends JavaPlugin {
     getDataFolder().mkdirs();
 
     getConfig().addDefault("defaultPlotWorld", "world");
-    getConfig().setComments("defaultPlotWorld", List.of("The default plot world assigned when a player wants to claim a new plot"));
     getConfig().addDefault("defaultMaxPlots", 1);
-    getConfig().setComments("defaultMaxPlots", List.of("Maximum number of plots one can own by default"));
     getConfig().addDefault("plotOwnerTiers", PlotOwnerTiers.DEFAULT);
-    getConfig().setComments("plotOwnerTiers", List.of("List of tiers that are available to players regarding how many plots they can own"));
-
     getConfig().options().copyDefaults(true);
+    getConfig().setComments("defaultPlotWorld", List.of("The default plot world assigned when a player wants to claim a new plot"));
+    getConfig().setComments("defaultMaxPlots", List.of("Maximum number of plots one can own by default"));
+    getConfig().setComments("plotOwnerTiers", List.of("List of tiers that are available to players regarding how many plots they can own"));
     saveConfig();
 
     ownerTiers = new HashMap<>();

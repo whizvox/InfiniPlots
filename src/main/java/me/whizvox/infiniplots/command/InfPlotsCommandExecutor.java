@@ -315,7 +315,11 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
         return;
       }
       UUID plotId = plotWorld.getAllPositions().get(pos);
-      plot = InfiniPlots.getInstance().getPlots().getPlot(plotId, true);
+      if (plotId != null) {
+        plot = InfiniPlots.getInstance().getPlots().getPlot(plotId, true);
+      } else {
+        plot = null;
+      }
     } else {
       try {
         UUID plotId = UUID.fromString(args[0]);

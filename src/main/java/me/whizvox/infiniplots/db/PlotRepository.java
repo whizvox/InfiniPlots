@@ -21,7 +21,7 @@ public class PlotRepository extends Repository {
       SELECT_BY_OWNER = SELECT_ALL + " WHERE owner=?",
       SELECT_BY_OWNER_AND_LOCAL_ID = SELECT_ALL + " WHERE owner=? AND local_id=?",
       SELECT_LATEST_LOCAL_ID = "SELECT local_id WHERE owner=? ORDER BY local_id LIMIT 1",
-      INSERT = "INSERT INTO plots id,owner,local_id,world,x,z VALUES ?,?,?,?,?,?",
+      INSERT = "INSERT INTO plots (id,owner,local_id,world,x,z) VALUES (?,?,?,?,?,?)",
       UPDATE_FORMAT = "UPDATE plots SET %s WHERE id=?",
       UPDATE_OWNER = UPDATE_FORMAT.formatted("owner=?"),
       DELETE = "DELETE FROM plots WHERE id=?",
