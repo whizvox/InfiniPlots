@@ -3,8 +3,8 @@ package me.whizvox.infiniplots.plot;
 import me.whizvox.infiniplots.util.ChunkPos;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -12,14 +12,16 @@ public class PlotWorld {
 
   public final String name;
   public final PlotWorldGenerator generator;
+  public final World world;
 
   private final Map<ChunkPos, UUID> allPositions;
   private final Map<ChunkPos, Set<UUID>> allEditors;
   private ChunkPos nextPos;
 
-  public PlotWorld(String name, PlotWorldGenerator generator) {
+  public PlotWorld(String name, PlotWorldGenerator generator, World world) {
     this.name = name;
     this.generator = generator;
+    this.world = world;
     allPositions = new HashMap<>();
     allEditors = new HashMap<>();
     nextPos = new ChunkPos(0, 0);
@@ -57,8 +59,8 @@ public class PlotWorld {
     return nextPos;
   }
 
-  public boolean canEdit(Player player) {
-    ChunkPos pos = getPlotPos(new ChunkPos(player.getLocation()));
+  public boolean canEdit(Player player, Location location) {
+    ChunkPos pos = getPlotPos(new ChunkPos(location));
     if (pos != null) {
       Set<UUID> editors = allEditors.get(pos);
       if (editors == null) {

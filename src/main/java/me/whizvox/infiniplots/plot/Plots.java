@@ -5,11 +5,14 @@ import me.whizvox.infiniplots.db.PlotMemberRepository;
 import me.whizvox.infiniplots.db.PlotRepository;
 import me.whizvox.infiniplots.db.PlotWorldRepository;
 import me.whizvox.infiniplots.util.ChunkPos;
+import me.whizvox.infiniplots.util.InfPlotUtils;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
+import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
@@ -75,7 +78,24 @@ public class Plots {
     worldRepo.forEach(props -> {
       PlotWorldGenerator generator = InfiniPlots.getInstance().getPlotGenRegistry().getGenerator(props.generator());
       if (generator != null) {
-        plotWorlds.computeIfAbsent(props.id(), id -> new PlotWorld(props.name(), generator)).setNextChunkPos(props.nextPos());
+        World world = Bukkit.getWorld(props.id());
+        if (world == null) {
+          File worldFolder = InfPlotUtils.getWorldFolder(props.name());
+          if (worldFolder.exists() && InfPlotUtils.isWorldFolder(worldFolder)) {
+            world = generator.createWorld(props.name());
+          } else {
+            InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world %s as its world folder does not exist", new Object[] {props.name()});
+            return;
+          }
+        }
+        // possible for this to fail when loading via the world folder
+        if (props.id().equals(world.getUID())) {
+          PlotWorld plotWorld = new PlotWorld(props.name(), generator, world);
+          plotWorld.setNextChunkPos(props.nextPos());
+          plotWorlds.put(props.id(), plotWorld);
+        } else {
+          InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world %s with unexpected unique ID. Expected: %s, Actual: %s", new Object[] {props.name(), props.id(), world.getUID()});
+        }
       } else {
         InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world (%s) since its generator (%s) is not registered", new Object[] {props.id(), props.generator()});
       }
@@ -103,7 +123,7 @@ public class Plots {
     if (generatorKey == null) {
       throw new IllegalArgumentException("Attempted to use unregistered generator of type " + generator.getClass());
     }
-    PlotWorld plotWorld = new PlotWorld(world.getName(), generator);
+    PlotWorld plotWorld = new PlotWorld(world.getName(), generator, world);
     if (writeToDatabase) {
       worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, plotWorld.getNextAvailableChunkPos()));
     }
