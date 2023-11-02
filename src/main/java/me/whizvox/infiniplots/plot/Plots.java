@@ -1,17 +1,20 @@
 package me.whizvox.infiniplots.plot;
 
+import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.db.PlotMemberRepository;
 import me.whizvox.infiniplots.db.PlotRepository;
 import me.whizvox.infiniplots.db.PlotWorldRepository;
 import me.whizvox.infiniplots.util.ChunkPos;
+import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.stream.Stream;
 
 public class Plots {
 
@@ -32,6 +35,10 @@ public class Plots {
     memberRepo = new PlotMemberRepository(conn);
     plotRepo = new PlotRepository(conn, memberRepo);
     worldRepo = new PlotWorldRepository(conn);
+  }
+
+  public Stream<Map.Entry<UUID, PlotWorld>> plotWorlds() {
+    return plotWorlds.entrySet().stream();
   }
 
   @Nullable
@@ -65,24 +72,43 @@ public class Plots {
     memberRepo.initialize();
     worldRepo.initialize();
 
+    worldRepo.forEach(props -> {
+      PlotWorldGenerator generator = InfiniPlots.getInstance().getPlotGenRegistry().getGenerator(props.generator());
+      if (generator != null) {
+        plotWorlds.computeIfAbsent(props.id(), id -> new PlotWorld(props.name(), generator)).setNextChunkPos(props.nextPos());
+      } else {
+        InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world (%s) since its generator (%s) is not registered", new Object[] {props.id(), props.generator()});
+      }
+    });
     plotRepo.forEach(plot -> {
       plotIds.add(plot.id());
-      plotWorlds.computeIfAbsent(plot.world(), worldId -> new PlotWorld()).add(plot);
+      PlotWorld plotWorld = plotWorlds.get(plot.world());
+      if (plotWorld != null) {
+        plotWorld.add(plot);
+      } else {
+        InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot (%s, (%d,%d)) since its world (%s) could not be found", new Object[] {plot.id(), plot.pos().x(), plot.pos().z(), plot.world()});
+      }
     }, true);
-    worldRepo.forEach(props -> {
-      plotWorlds.computeIfAbsent(props.id(), id -> new PlotWorld()).setNextChunkPos(props.nextPos());
-    });
   }
 
-  public boolean importWorld(World world) {
+  @Nullable
+  public PlotWorld importWorld(World world, PlotWorldGenerator generator, boolean writeToDatabase) {
     UUID worldId = world.getUID();
     if (plotWorlds.containsKey(worldId)) {
-      return false;
+      return null;
     }
-    PlotWorld pWorld = new PlotWorld();
-    plotWorlds.put(worldId, pWorld);
-    worldRepo.insert(new PlotWorldProperties(worldId, pWorld.getNextAvailableChunkPos()));
-    return true;
+    // technically don't need to do this if it isn't necessary to write to the database, but it's good to check if the
+    // passed generator is registered or not
+    String generatorKey = InfiniPlots.getInstance().getPlotGenRegistry().getKey(generator);
+    if (generatorKey == null) {
+      throw new IllegalArgumentException("Attempted to use unregistered generator of type " + generator.getClass());
+    }
+    PlotWorld plotWorld = new PlotWorld(world.getName(), generator);
+    if (writeToDatabase) {
+      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, plotWorld.getNextAvailableChunkPos()));
+    }
+    plotWorlds.put(worldId, plotWorld);
+    return plotWorld;
   }
 
   public void deleteWorldPlotData(World world) {

@@ -13,6 +13,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,7 +35,7 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
       USAGE_TPWORLD = ChatUtils.buildUsage("tpw <worldName>");
 
   @Override
-  public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+  public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
     if (!(sender instanceof Player player)) {
       sender.sendMessage(ChatUtils.altColors("&cCommand sender must be a player"));
       return true;
@@ -77,8 +78,9 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     player.teleport(world.getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 
+  // TODO Allow plot world generator to specify teleport location
   private void teleportToPlot_do(Player player, World world, ChunkPos pos) {
-    Location location = new Location(world, pos.x() * 16 + 7.5, 1, pos.z() * 16 - 3.5, 0, 0);
+    Location location = new Location(world, pos.x() * 16 + 7.5, 0, pos.z() * 16 - 3.5, 0, 0);
     player.sendMessage(ChatUtils.altColorsf("Teleporting to plot..."));
     player.teleport(location);
   }
@@ -102,9 +104,6 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
       player.sendMessage(ChatUtils.altColorsf("&cInvalid Z position: &b%s", args[1]));
       return;
     }
-    if (x % 2 != 0 || z % 2 != 0) {
-      player.sendMessage(ChatUtils.altColorsf("&cInvalid plot position: &b%d%c,&b%d", x, z));
-    }
     World world;
     if (args.length > 2) {
       world = Bukkit.getWorld(args[2]);
@@ -118,8 +117,13 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     PlotWorld plotWorld = InfiniPlots.getInstance().getPlots().getPlotWorld(world.getUID());
     if (plotWorld == null) {
       player.sendMessage(ChatUtils.altColorsf("&cWorld &b%s&c is not a plot world", world.getName()));
+      return;
     }
-    teleportToPlot_do(player, world, new ChunkPos(x, z));
+    if (!plotWorld.generator.inPlot(x, z)) {
+      player.sendMessage(ChatUtils.altColorsf("&cInvalid plot position: &b%d%c,&b%d", x, z));
+      return;
+    }
+    teleportToPlot_do(player, world, plotWorld.getPlotPos(new ChunkPos(x, z)));
   }
 
   private void teleportToPlotWithId(Player player, String[] args) {
@@ -222,6 +226,7 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     if (plotWorld == null) {
       if (args.length == 0 && !here) {
         String defaultWorldName = InfiniPlots.getInstance().getConfig().getString("defaultPlotWorld");
+        //noinspection DataFlowIssue defaultPlotWorld has a default value
         world = Bukkit.getWorld(defaultWorldName);
         if (world == null) {
           player.sendMessage(ChatUtils.altColorsf("&cDefault plot world &b%s&c does not exist. Please tell an admin about this!", defaultWorldName));
@@ -308,9 +313,8 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
         player.sendMessage(ChatUtils.altColors("&cNo plot found"));
         return;
       }
-      Chunk chunk = player.getLocation().getChunk();
-      pos = new ChunkPos(chunk.getX(), chunk.getZ());
-      if (pos.x() % 2 != 0 || pos.z() % 2 != 0) {
+      pos = plotWorld.getPlotPos(new ChunkPos(player.getLocation()));
+      if (pos == null) {
         player.sendMessage(ChatUtils.altColors("&cNo plot found"));
         return;
       }
@@ -328,6 +332,10 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
           throw new IllegalArgumentException();
         }
         world = Bukkit.getWorld(plot.world());
+        if (world == null) {
+          sender.sendMessage(ChatUtils.altColorsf("&cPlot &b%s&c found with invalid world ID &e%s", plot.id(), plot.world()));
+          return;
+        }
         pos = plot.pos();
       } catch (IllegalArgumentException e) {
         sender.sendMessage(ChatUtils.altColorsf("&cNo plot found with ID of &b%s", args[0]));

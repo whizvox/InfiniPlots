@@ -1,20 +1,48 @@
 package me.whizvox.infiniplots.plot;
 
 import me.whizvox.infiniplots.util.ChunkPos;
+import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 public class PlotWorld {
 
+  public final String name;
+  public final PlotWorldGenerator generator;
+
   private final Map<ChunkPos, UUID> allPositions;
   private final Map<ChunkPos, Set<UUID>> allEditors;
   private ChunkPos nextPos;
 
-  public PlotWorld() {
+  public PlotWorld(String name, PlotWorldGenerator generator) {
+    this.name = name;
+    this.generator = generator;
     allPositions = new HashMap<>();
     allEditors = new HashMap<>();
     nextPos = new ChunkPos(0, 0);
+  }
+
+  public ChunkPos getPlotPos(ChunkPos pos) {
+    if (generator.inPlot(pos.x(), pos.z())) {
+      int x, z;
+      // get the southwest-most corner
+      if (pos.x() >= 0) {
+        x = pos.x() - (pos.x() % generator.regionWidth);
+      } else {
+        x = pos.x() - ((pos.x() - 1) % generator.regionWidth) - 1;
+      }
+      if (pos.z() >= 0) {
+        z = pos.z() - (pos.z() % generator.regionDepth);
+      } else {
+        z = pos.z() - ((pos.z() - 1) % generator.regionDepth) - 1;
+      }
+      return new ChunkPos(x, z);
+    } else {
+      return null;
+    }
   }
 
   public Map<ChunkPos, UUID> getAllPositions() {
@@ -30,12 +58,15 @@ public class PlotWorld {
   }
 
   public boolean canEdit(Player player) {
-    ChunkPos pos = new ChunkPos(player.getLocation());
-    Set<UUID> editors = allEditors.get(pos);
-    if (editors == null) {
-      return false;
+    ChunkPos pos = getPlotPos(new ChunkPos(player.getLocation()));
+    if (pos != null) {
+      Set<UUID> editors = allEditors.get(pos);
+      if (editors == null) {
+        return false;
+      }
+      return editors.contains(player.getUniqueId());
     }
-    return editors.contains(player.getUniqueId());
+    return false;
   }
 
   public ChunkPos getNextAvailableChunkPos() {
@@ -44,20 +75,20 @@ public class PlotWorld {
     ChunkPos pos = new ChunkPos(x, z);
     while (allPositions.containsKey(pos)) {
       if (x == 0 && z == 0) {
-        z = 2;
+        z = generator.regionDepth;
       } else if (x == -2 && z > 0) {
         x = 0;
-        z += 2;
+        z += generator.regionDepth;
       } else {
         int max = Math.max(Math.abs(x), Math.abs(z));
         if (z == max && x < max) {
-          x += 2;
+          x += generator.regionWidth;
         } else if (z == -max && x > -max) {
-          x -= 2;
+          x -= generator.regionWidth;
         } else if (x == max) {
-          z -= 2;
+          z -= generator.regionDepth;
         } else {
-          z += 2;
+          z += generator.regionDepth;
         }
       }
       pos = new ChunkPos(x, z);

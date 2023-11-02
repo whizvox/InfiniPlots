@@ -3,7 +3,7 @@ package me.whizvox.infiniplots.db;
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.util.ChunkPos;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -105,9 +105,11 @@ public class PlotRepository extends Repository {
 
   public void updateOwner(UUID plotId, UUID newOwner) {
     Plot plot = getById(plotId, false);
-    executeUpdate(UPDATE_OWNER, List.of(newOwner, plotId));
-    memberRepo.removeMember(plotId, newOwner);
-    memberRepo.addMember(plotId, plot.owner());
+    if (plot != null) {
+      executeUpdate(UPDATE_OWNER, List.of(newOwner, plotId));
+      memberRepo.removeMember(plotId, newOwner);
+      memberRepo.addMember(plotId, plot.owner());
+    }
   }
 
   public void remove(UUID id) {

@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'me.whizvox'
-version = 'dev-1.0.0'
+version = 'dev-1.0.1'
 
 repositories {
   mavenCentral()
@@ -19,6 +19,7 @@ repositories {
 
 dependencies {
   compileOnly "org.spigotmc:spigot-api:1.20.2-R0.1-SNAPSHOT"
+  compileOnly 'org.jetbrains:annotations:24.0.1'
   implementation 'org.xerial:sqlite-jdbc:3.43.2.1'
 }
 
