@@ -79,7 +79,7 @@ public class InfPlotsAdminCommandExecutor implements CommandExecutor {
       return;
     }
     world = generator.createWorld(worldName);
-    InfiniPlots.getInstance().getPlots().importWorld(world, generator, true);
+    InfiniPlots.getInstance().getPlotManager().importWorld(world, generator, true);
     sender.sendMessage(ChatUtils.altColorsf("World &b%s&r (&e%s&r) has been created", world.getName(), world.getUID()));
   }
 
@@ -99,7 +99,7 @@ public class InfPlotsAdminCommandExecutor implements CommandExecutor {
       world = WorldCreator.name(worldName).createWorld();
     }
     //noinspection DataFlowIssue world is guaranteed to be defined
-    PlotWorld plotWorld = InfiniPlots.getInstance().getPlots().getPlotWorld(world.getUID());
+    PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(world.getUID());
     if (plotWorld != null) {
       sender.sendMessage(ChatUtils.altColorsf("&cWorld &b%s&c is already imported", worldName));
       return;
@@ -110,7 +110,7 @@ public class InfPlotsAdminCommandExecutor implements CommandExecutor {
       sender.sendMessage(ChatUtils.altColorsf("&cNo generator with key &b%s&c has been registered", generatorKey));
       return;
     }
-    InfiniPlots.getInstance().getPlots().importWorld(world, generator, true);
+    InfiniPlots.getInstance().getPlotManager().importWorld(world, generator, true);
     sender.sendMessage(ChatUtils.altColorsf("World &b%s&r has been imported", world.getName()));
   }
 

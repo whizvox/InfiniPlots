@@ -4,6 +4,8 @@ main: me.whizvox.infiniplots.InfiniPlots
 api-version: '1.20'
 author: whizvox
 description: Plots plugin
+softdepend:
+  - WorldGuard
 commands:
   infiniplotsadmin:
     description: Admin command for InfiniPlots

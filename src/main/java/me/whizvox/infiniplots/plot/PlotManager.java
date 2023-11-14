@@ -1,15 +1,11 @@
 package me.whizvox.infiniplots.plot;
 
 import me.whizvox.infiniplots.InfiniPlots;
-import me.whizvox.infiniplots.db.PlotMemberRepository;
-import me.whizvox.infiniplots.db.PlotRepository;
-import me.whizvox.infiniplots.db.PlotWorldRepository;
-import me.whizvox.infiniplots.util.ChunkPos;
+import me.whizvox.infiniplots.db.*;
 import me.whizvox.infiniplots.util.InfPlotUtils;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -19,62 +15,76 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
-public class Plots {
+public class PlotManager {
 
-  private final Connection conn;
-
-  private final Set<UUID> plotIds;
-  private final Map<UUID, PlotWorld> plotWorlds;
+  private final Map<UUID, PlotWorld> worlds;
 
   private final PlotMemberRepository memberRepo;
+  private final PlotFlagsRepository plotFlagsRepo;
+  private final WorldFlagsRepository worldFlagsRepo;
   private final PlotRepository plotRepo;
   private final PlotWorldRepository worldRepo;
 
-  public Plots(Connection conn) {
-    this.conn = conn;
-    plotIds = new HashSet<>();
-    plotWorlds = new HashMap<>();
+  private String defaultWorldName;
+  private PlotWorld defaultWorld;
+
+  public PlotManager(Connection conn) {
+    worlds = new HashMap<>();
 
     memberRepo = new PlotMemberRepository(conn);
-    plotRepo = new PlotRepository(conn, memberRepo);
-    worldRepo = new PlotWorldRepository(conn);
+    plotFlagsRepo = new PlotFlagsRepository(conn);
+    worldFlagsRepo = new WorldFlagsRepository(conn);
+    plotRepo = new PlotRepository(conn, memberRepo, plotFlagsRepo);
+    worldRepo = new PlotWorldRepository(conn, worldFlagsRepo);
+
+    defaultWorldName = null;
+    defaultWorld = null;
   }
 
   public Stream<Map.Entry<UUID, PlotWorld>> plotWorlds() {
-    return plotWorlds.entrySet().stream();
+    return worlds.entrySet().stream();
   }
 
   @Nullable
   public PlotWorld getPlotWorld(UUID worldId) {
-    return plotWorlds.get(worldId);
-  }
-
-  public boolean doesPlotExist(UUID plotId) {
-    return plotIds.contains(plotId);
+    return worlds.get(worldId);
   }
 
   @Nullable
-  public Plot getPlot(UUID plotId, boolean populate) {
-    return plotRepo.getById(plotId, populate);
+  public Plot getPlot(PlotId plotId, boolean populate) {
+    return plotRepo.getByWorld(plotId.world(), plotId.plot(), populate);
   }
 
   @Nullable
-  public Plot getPlot(UUID ownerId, int localId, boolean populate) {
-    return plotRepo.getByOwner(ownerId, localId, populate);
+  public Plot getPlot(UUID ownerId, int ownerPlotId, boolean populate) {
+    return plotRepo.getOneWithOwner(ownerId, ownerPlotId, populate);
   }
 
   public List<Plot> getPlots(UUID ownerId, boolean populate) {
     return plotRepo.getByOwner(ownerId, populate);
   }
 
+  @Nullable
+  public String getDefaultWorldName() {
+    return defaultWorldName;
+  }
+
+  @Nullable
+  public PlotWorld getDefaultWorld() {
+    return defaultWorld;
+  }
+
   public void sync() throws SQLException {
-    plotIds.clear();
-    plotWorlds.clear();
+    worlds.clear();
 
     plotRepo.initialize();
     memberRepo.initialize();
+    plotFlagsRepo.initialize();
+    worldFlagsRepo.initialize();
     worldRepo.initialize();
 
+    defaultWorldName = InfiniPlots.getInstance().getConfig().getString("defaultPlotWorld");
+    defaultWorld = null;
     worldRepo.forEach(props -> {
       PlotWorldGenerator generator = InfiniPlots.getInstance().getPlotGenRegistry().getGenerator(props.generator());
       if (generator != null) {
@@ -91,22 +101,17 @@ public class Plots {
         // possible for this to fail when loading via the world folder
         if (props.id().equals(world.getUID())) {
           PlotWorld plotWorld = new PlotWorld(props.name(), generator, world);
-          plotWorld.setNextChunkPos(props.nextPos());
-          plotWorlds.put(props.id(), plotWorld);
+          plotWorld.worldFlags.addAll(props.flags());
+          plotWorld.nextPlotNumber = plotRepo.getLastPlotNumber(props.id());
+          worlds.put(props.id(), plotWorld);
+          if (props.name().equals(defaultWorldName)) {
+            defaultWorld = plotWorld;
+          }
         } else {
           InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world %s with unexpected unique ID. Expected: %s, Actual: %s", new Object[] {props.name(), props.id(), world.getUID()});
         }
       } else {
         InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world (%s) since its generator (%s) is not registered", new Object[] {props.id(), props.generator()});
-      }
-    });
-    plotRepo.forEach(plot -> {
-      plotIds.add(plot.id());
-      PlotWorld plotWorld = plotWorlds.get(plot.world());
-      if (plotWorld != null) {
-        plotWorld.add(plot);
-      } else {
-        InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot (%s, (%d,%d)) since its world (%s) could not be found", new Object[] {plot.id(), plot.pos().x(), plot.pos().z(), plot.world()});
       }
     }, true);
   }
@@ -114,7 +119,7 @@ public class Plots {
   @Nullable
   public PlotWorld importWorld(World world, PlotWorldGenerator generator, boolean writeToDatabase) {
     UUID worldId = world.getUID();
-    if (plotWorlds.containsKey(worldId)) {
+    if (worlds.containsKey(worldId)) {
       return null;
     }
     // technically don't need to do this if it isn't necessary to write to the database, but it's good to check if the
@@ -125,9 +130,10 @@ public class Plots {
     }
     PlotWorld plotWorld = new PlotWorld(world.getName(), generator, world);
     if (writeToDatabase) {
-      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, plotWorld.getNextAvailableChunkPos()));
+      // TODO Implement default world flags
+      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, LockdownLevel.OFF, Set.of()));
     }
-    plotWorlds.put(worldId, plotWorld);
+    worlds.put(worldId, plotWorld);
     return plotWorld;
   }
 
@@ -137,31 +143,15 @@ public class Plots {
     plotRepo.removeByWorld(worldId);
   }
 
-  public void deletePlotData(UUID plotId) {
-    plotRepo.remove(plotId);
+  public void deletePlotData(PlotId plotId) {
+    plotRepo.remove(plotId.world(), plotId.plot());
   }
 
   @Nullable
-  public ChunkPos getNextAvailableChunkPos(UUID worldId) {
-    PlotWorld world = getPlotWorld(worldId);
-    if (world == null) {
-      return null;
-    }
-    return world.getNextAvailableChunkPos();
-  }
-
-  public void updateNextChunkPos(UUID worldId) {
-    PlotWorld world = plotWorlds.get(worldId);
+  public Plot addPlot(UUID worldId, int worldPlotNumber, UUID ownerId, int ownerPlotNumber) {
+    PlotWorld world = worlds.get(worldId);
     if (world != null) {
-      worldRepo.updateNextPos(worldId, world.getNextAvailableChunkPos());
-    }
-  }
-
-  @Nullable
-  public Plot addPlot(Player owner, int localId, UUID worldId, ChunkPos pos) {
-    PlotWorld world = plotWorlds.get(worldId);
-    if (world != null) {
-      Plot plot = new Plot(UUID.randomUUID(), owner.getUniqueId(), localId, Set.of(), worldId, pos);
+      Plot plot = new Plot(worldId, worldPlotNumber, ownerId, ownerPlotNumber, Set.of(), Set.of());
       plotRepo.insert(plot);
       world.add(plot);
       return plot;

@@ -1,11 +1,11 @@
 package me.whizvox.infiniplots.db;
 
 import me.whizvox.infiniplots.util.SQLFunction;
+import me.whizvox.infiniplots.util.SQLNull;
 import me.whizvox.infiniplots.util.SQLRunnable;
 
 import java.sql.*;
 import java.util.List;
-import java.util.function.Consumer;
 
 public abstract class Repository {
 
@@ -48,6 +48,10 @@ public abstract class Repository {
             stmt.setBoolean(index, value);
           } else if (arg instanceof Integer value) {
             stmt.setInt(index, value);
+          } else if (arg instanceof Enum<?> value) {
+            stmt.setByte(index, (byte) value.ordinal());
+          } else if (arg instanceof SQLNull value) {
+            stmt.setNull(index, value.sqlType());
           } else {
             stmt.setString(index, String.valueOf(arg));
           }

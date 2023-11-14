@@ -29,7 +29,7 @@ public class GriefPreventionEventsListener implements Listener {
       BYPASS_RIDE = PermissionUtils.buildPermission("admin.bypass.ride");
 
   private boolean checkActionAllowed(Cancellable event, Player player, Location location, String permission) {
-    PlotWorld plotWorld = InfiniPlots.getInstance().getPlots().getPlotWorld(location.getWorld().getUID());
+    PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(location.getWorld().getUID());
     boolean allowed = plotWorld == null || player.hasPermission(permission) || plotWorld.canEdit(player, location);
     if (!allowed) {
       player.sendMessage(ChatUtils.altColors("&cNot allowed here"));

@@ -4,7 +4,7 @@ import me.whizvox.infiniplots.command.InfPlotsAdminCommandExecutor;
 import me.whizvox.infiniplots.command.InfPlotsCommandExecutor;
 import me.whizvox.infiniplots.event.CheckEntityPlotBoundsTask;
 import me.whizvox.infiniplots.event.GriefPreventionEventsListener;
-import me.whizvox.infiniplots.plot.Plots;
+import me.whizvox.infiniplots.plot.PlotManager;
 import me.whizvox.infiniplots.util.PlotOwnerTiers;
 import me.whizvox.infiniplots.worldgen.PlotWorldGeneratorRegistry;
 import me.whizvox.infiniplots.worldgen.PlotWorldPlainGenerator;
@@ -31,13 +31,13 @@ public final class InfiniPlots extends JavaPlugin {
   }
 
   private Connection conn = null;
-  private Plots plots = null;
+  private PlotManager plotManager = null;
   private Map<String, Integer> ownerTiers = null;
   private PlotWorldGeneratorRegistry plotGenRegistry = null;
   private int checkEntityPlotsTask = -1;
 
-  public Plots getPlots() {
-    return plots;
+  public PlotManager getPlotManager() {
+    return plotManager;
   }
 
   public Map<String, Integer> getOwnerTiers() {
@@ -55,7 +55,6 @@ public final class InfiniPlots extends JavaPlugin {
   public void onEnable() {
     instance = this;
     ConfigurationSerialization.registerClass(PlotOwnerTiers.class);
-    //noinspection ResultOfMethodCallIgnored extremely unlikely for this to fail
     getDataFolder().mkdirs();
 
     getConfig().addDefault("defaultPlotWorld", "world");
@@ -63,7 +62,10 @@ public final class InfiniPlots extends JavaPlugin {
     getConfig().addDefault("plotOwnerTiers", PlotOwnerTiers.DEFAULT);
     getConfig().addDefault("defaultPlotWorldGenerator", "plains2");
     getConfig().addDefault("checkEntityPlotBounds", 4);
+    //getConfig().addDefault("useWorldGuardIfLoaded", true);
+
     getConfig().options().copyDefaults(true);
+
     getConfig().setComments("defaultPlotWorld", List.of("The default plot world assigned when a player wants to claim a new plot"));
     getConfig().setComments("defaultMaxPlots", List.of("Maximum number of plots one can own by default"));
     getConfig().setComments("plotOwnerTiers", List.of("List of tiers that are available to players regarding how many plots they can own"));
@@ -74,10 +76,13 @@ public final class InfiniPlots extends JavaPlugin {
         "For example: a value of 2 means this is checked every 2 ticks, or 10 times per second",
         "If a value of 0 is passed, then this check is disabled entirely"
     ));
+    /*getConfig().setComments("useWorldGuardIfLoaded", List.of(
+        "Use WorldGuard regions to handle plot world interactions",
+        "If false or if WorldGuard is not loaded, InfiniPlots will use its own event handlers"
+    ));*/
     saveConfig();
 
     ownerTiers = new HashMap<>();
-    //noinspection DataFlowIssue default value of plotOwnerTiers is set
     ownerTiers.putAll(getConfig().getSerializable("plotOwnerTiers", PlotOwnerTiers.class).tiers);
 
     plotGenRegistry = new PlotWorldGeneratorRegistry();
@@ -87,16 +92,14 @@ public final class InfiniPlots extends JavaPlugin {
 
     try {
       conn = DriverManager.getConnection("jdbc:sqlite:" + new File(getDataFolder(), "infiniplots.db").getAbsolutePath());
-      plots = new Plots(conn);
-      plots.sync();
+      plotManager = new PlotManager(conn);
+      plotManager.sync();
       getLogger().info("Loaded plots database");
     } catch (SQLException e) {
       throw new RuntimeException("Could not use SQLite database", e);
     }
 
-    //noinspection DataFlowIssue command is listed in plugin.yml
     getCommand("infiniplotsadmin").setExecutor(new InfPlotsAdminCommandExecutor());
-    //noinspection DataFlowIssue command is listed in plugin.yml
     getCommand("infiniplots").setExecutor(new InfPlotsCommandExecutor());
 
     getServer().getPluginManager().registerEvents(new GriefPreventionEventsListener(), this);

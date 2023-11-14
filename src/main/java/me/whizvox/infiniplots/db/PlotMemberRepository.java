@@ -9,15 +9,15 @@ public class PlotMemberRepository extends Repository {
 
   private static final String
       CREATE_TABLE = "CREATE TABLE IF NOT EXISTS plot_members(" +
-          "plot CHAR(36) NOT NULL, " +
-          "member CHAR(36) NOT NULL, " +
           "world CHAR(36) NOT NULL, " +
-          "PRIMARY KEY (plot, member)" +
+          "world_plot_id INT NOT NULL, " +
+          "member CHAR(36) NOT NULL, " +
+          "UNIQUE (world, world_plot_id, member)" +
       ")",
-      SELECT_MEMBERS = "SELECT member FROM plot_members WHERE plot=?",
-      INSERT = "INSERT INTO plot_members (plot,member) VALUES (?,?)",
-      DELETE_MEMBER = "DELETE FROM plot_members WHERE plot=? AND member=?",
-      DELETE_PLOT = "DELETE FROM plot_members WHERE plot=?",
+      SELECT_MEMBERS = "SELECT member FROM plot_members WHERE world=? AND world_plot_id=?",
+      INSERT = "INSERT INTO plot_members (world,world_plot_id,member) VALUES (?,?,?)",
+      DELETE_MEMBER = "DELETE FROM plot_members WHERE world=? AND world_plot_id=? AND member=?",
+      DELETE_PLOT = "DELETE FROM plot_members WHERE world=? AND world_plot_id=?",
       DELETE_WORLD = "DELETE FROM plot_members WHERE world=?";
 
   public PlotMemberRepository(Connection conn) {
@@ -29,8 +29,8 @@ public class PlotMemberRepository extends Repository {
     execute(CREATE_TABLE);
   }
 
-  public List<UUID> getMembers(UUID plotId) {
-    return executeQuery(SELECT_MEMBERS, List.of(plotId), rs -> {
+  public List<UUID> getMembers(UUID worldId, int worldPlotId) {
+    return executeQuery(SELECT_MEMBERS, List.of(worldId, worldPlotId), rs -> {
       List<UUID> members = new ArrayList<>();
       while (rs.next()) {
         members.add(UUID.fromString(rs.getString(1)));
@@ -39,16 +39,16 @@ public class PlotMemberRepository extends Repository {
     });
   }
 
-  public void addMember(UUID plotId, UUID memberId) {
-    executeUpdate(INSERT, List.of(plotId, memberId));
+  public void addMember(UUID worldId, int worldPlotId, UUID memberId) {
+    executeUpdate(INSERT, List.of(worldId, worldPlotId, memberId));
   }
 
-  public void removeMember(UUID plotId, UUID memberId) {
-    executeUpdate(DELETE_MEMBER, List.of(plotId, memberId));
+  public void removeMember(UUID worldId, int worldPlotId, UUID memberId) {
+    executeUpdate(DELETE_MEMBER, List.of(worldId, worldPlotId, memberId));
   }
 
-  public void removePlot(UUID plotId) {
-    executeUpdate(DELETE_PLOT, List.of(plotId));
+  public void removePlot(UUID worldId, int worldPlotId) {
+    executeUpdate(DELETE_PLOT, List.of(worldId, worldPlotId));
   }
 
   public void removeWorld(UUID worldId) {

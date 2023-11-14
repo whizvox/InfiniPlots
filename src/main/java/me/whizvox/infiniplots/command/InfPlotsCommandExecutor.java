@@ -2,11 +2,9 @@ package me.whizvox.infiniplots.command;
 
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.plot.Plot;
+import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.plot.PlotWorld;
-import me.whizvox.infiniplots.util.ChatUtils;
-import me.whizvox.infiniplots.util.ChunkPos;
-import me.whizvox.infiniplots.util.PermissionUtils;
-import me.whizvox.infiniplots.util.PlayerUtils;
+import me.whizvox.infiniplots.util.*;
 import org.bukkit.*;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -29,10 +27,11 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
       PERMISSION_CLAIM_INF = PERMISSION_CLAIM + ".inf",
       PERMISSION_INFO = PermissionUtils.buildPermission("info"),
 
-      USAGE_TP = ChatUtils.buildUsage("tp <x> <z> [<world>]"),
-      USAGE_TP_ID = ChatUtils.buildUsage("tpi <plotId>"),
-      USAGE_TP_OWNER = ChatUtils.buildUsage("tpo <ownerName> [<localId>]"),
-      USAGE_TPWORLD = ChatUtils.buildUsage("tpw <worldName>");
+      USAGE_TP = ChatUtils.buildUsage("tp <plot number> [<world>]"),
+      USAGE_TP_OWNER = ChatUtils.buildUsage("tpo <owner> [<owner plot number>]"),
+      USAGE_TPWORLD = ChatUtils.buildUsage("tpw <world>"),
+      USAGE_CLAIM = ChatUtils.buildUsage("claim [<plot number> [<world>]]"),
+      USAGE_INFO = ChatUtils.buildUsage("info [<plot number> [<world>]]");
 
   @Override
   public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
@@ -45,8 +44,7 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     }
     String[] remainingArgs = Arrays.copyOfRange(args, 1, args.length);
     switch (args[0]) {
-      case "tp" -> teleportToPlotWithPosition(player, remainingArgs);
-      case "tpi" -> teleportToPlotWithId(player, remainingArgs);
+      case "tp" -> teleportToPlotWithPlotNumber(player, remainingArgs);
       case "tpo" -> teleportToPlotWithOwner(player, remainingArgs);
       case "tpw" -> teleportToWorld(player, remainingArgs);
       case "claim" -> claim(player, false, remainingArgs);
@@ -78,30 +76,19 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     player.teleport(world.getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 
-  // TODO Allow plot world generator to specify teleport location
-  private void teleportToPlot_do(Player player, World world, ChunkPos pos) {
-    Location location = new Location(world, pos.x() * 16 + 7.5, 0, pos.z() * 16 - 3.5, 0, 0);
-    player.sendMessage(ChatUtils.altColorsf("Teleporting to plot..."));
-    player.teleport(location);
-  }
-
-  private void teleportToPlotWithPosition(Player player, String[] args) {
+  private void teleportToPlotWithPlotNumber(Player player, String[] args) {
     if (args.length < 1) {
       player.sendMessage(USAGE_TP);
       return;
     }
-    int x;
-    int z;
+    int plotNumber;
     try {
-      x = Integer.parseInt(args[0]);
+      plotNumber = Integer.parseInt(args[0]);
+      if (plotNumber < 1) {
+        throw new NumberFormatException();
+      }
     } catch (NumberFormatException e) {
-      player.sendMessage(ChatUtils.altColorsf("&cInvalid X position: &b%s", args[0]));
-      return;
-    }
-    try {
-      z = Integer.parseInt(args[1]);
-    } catch (NumberFormatException e) {
-      player.sendMessage(ChatUtils.altColorsf("&cInvalid Z position: &b%s", args[1]));
+      player.sendMessage(ChatUtils.altColorsf("&cInvalid plot number: &b%s", args[0]));
       return;
     }
     World world;
@@ -114,44 +101,20 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     } else {
       world = player.getWorld();
     }
-    PlotWorld plotWorld = InfiniPlots.getInstance().getPlots().getPlotWorld(world.getUID());
+    PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(world.getUID());
     if (plotWorld == null) {
-      player.sendMessage(ChatUtils.altColorsf("&cWorld &b%s&c is not a plot world", world.getName()));
+      plotWorld = InfiniPlots.getInstance().getPlotManager().getDefaultWorld();
+      if (plotWorld == null) {
+        player.sendMessage(ChatUtils.altColorsf("&cDefault plot world is not set up. Please report this to an admin!", world.getName()));
+        return;
+      }
+    }
+    Location location = plotWorld.generator.getTeleportLocation(world, plotNumber);
+    if (location == null) {
+      player.sendMessage(ChatUtils.altColorsf("&cCould not teleport to plot"));
       return;
     }
-    if (!plotWorld.generator.inPlot(x, z)) {
-      player.sendMessage(ChatUtils.altColorsf("&cInvalid plot position: &b%d%c,&b%d", x, z));
-      return;
-    }
-    teleportToPlot_do(player, world, plotWorld.getPlotPos(new ChunkPos(x, z)));
-  }
-
-  private void teleportToPlotWithId(Player player, String[] args) {
-    if (!player.hasPermission(PERMISSION_TPPLOT)) {
-      ChatUtils.notPermitted(player);
-      return;
-    }
-    if (args.length == 0) {
-      player.sendMessage(USAGE_TP_ID);
-    }
-    UUID plotId;
-    try {
-      plotId = UUID.fromString(args[0]);
-    } catch (IllegalArgumentException ignored) {
-      player.sendMessage(ChatUtils.altColors("&cPlot ID must be a UUID"));
-      return;
-    }
-    Plot plot = InfiniPlots.getInstance().getPlots().getPlot(plotId, false);
-    if (plot == null) {
-      player.sendMessage(ChatUtils.altColors("&cNo plot found with that ID"));
-      return;
-    }
-    World world = Bukkit.getWorld(plot.world());
-    if (world == null) {
-      player.sendMessage(ChatUtils.altColorsf("&cUnknown world ID: &b%s", plot.world()));
-      return;
-    }
-    teleportToPlot_do(player, world, plot.pos());
+    player.teleport(location, PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 
   private void teleportToPlotWithOwner(Player player, String[] args) {
@@ -189,7 +152,7 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     } else {
       localId = 1;
     }
-    Plot plot = InfiniPlots.getInstance().getPlots().getPlot(ownerId, localId, false);
+    Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(ownerId, localId, false);
     if (plot == null) {
       if (args.length > 1) {
         player.sendMessage(ChatUtils.altColorsf("&cNo plot found with owner &b%s&c and local ID &b%s", ownerName, localId));
@@ -203,7 +166,17 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
       player.sendMessage(ChatUtils.altColorsf("&cNo world found with ID &b%s", plot.world()));
       return;
     }
-    teleportToPlot_do(player, world, plot.pos());
+    PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(world.getUID());
+    if (plotWorld == null) {
+      player.sendMessage(ChatUtils.altColors("&cInvalid world ID. Please report this to an admin!"));
+      return;
+    }
+    Location location = plotWorld.generator.getTeleportLocation(world, plot.worldPlotId());
+    if (location == null) {
+      player.sendMessage(ChatUtils.altColors("&cCould not teleport to plot. Please report this to an admin!"));
+      return;
+    }
+    player.teleport(location, PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 
   private void claim(Player player, boolean here, String[] args) {
@@ -212,9 +185,8 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
       return;
     }
     World world;
-    PlotWorld plotWorld;
-    if (args.length > 0 && !here) {
-      world = Bukkit.getWorld(args[0]);
+    if (args.length > 1 && !here) {
+      world = Bukkit.getWorld(args[1]);
       if (world == null) {
         player.sendMessage(ChatUtils.altColorsf("&cNo world was found with name of &b%s", args[0]));
         return;
@@ -222,19 +194,12 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     } else {
       world = player.getWorld();
     }
-    plotWorld = InfiniPlots.getInstance().getPlots().getPlotWorld(world.getUID());
+    PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(world.getUID());
     if (plotWorld == null) {
       if (args.length == 0 && !here) {
-        String defaultWorldName = InfiniPlots.getInstance().getConfig().getString("defaultPlotWorld");
-        //noinspection DataFlowIssue defaultPlotWorld has a default value
-        world = Bukkit.getWorld(defaultWorldName);
-        if (world == null) {
-          player.sendMessage(ChatUtils.altColorsf("&cDefault plot world &b%s&c does not exist. Please tell an admin about this!", defaultWorldName));
-          return;
-        }
-        plotWorld = InfiniPlots.getInstance().getPlots().getPlotWorld(world.getUID());
+        plotWorld = InfiniPlots.getInstance().getPlotManager().getDefaultWorld();
         if (plotWorld == null) {
-          player.sendMessage(ChatUtils.altColorsf("&cDefault plot world &b%s&c is not a plot world. Please tell an admin about this!", defaultWorldName));
+          player.sendMessage(ChatUtils.altColorsf("&cDefault plot world is not set up. Please tell an admin about this!"));
           return;
         }
       } else {
@@ -242,6 +207,26 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
         return;
       }
     }
+    int plotNumber;
+    if (args.length > 0) {
+      String plotNumberStr = args[0];
+      try {
+        plotNumber = Integer.parseInt(plotNumberStr);
+        if (plotNumber < 1) {
+          throw new NumberFormatException();
+        }
+      } catch (NumberFormatException e) {
+        player.sendMessage(ChatUtils.altColorsf("&cInvalid plot number: &b%s", plotNumberStr));
+        return;
+      }
+    } else {
+      plotNumber = plotWorld.calculateNextUnclaimedPlot();
+      if (plotNumber < 1) {
+        player.sendMessage(ChatUtils.altColors("&cMaximum number of plots has been claimed"));
+        return;
+      }
+    }
+
     int max = 0;
     if (player.hasPermission(PERMISSION_CLAIM_INF)) {
       max = Integer.MAX_VALUE;
@@ -259,39 +244,29 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
         return;
       }
     }
-    List<Plot> plots = InfiniPlots.getInstance().getPlots().getPlots(player.getUniqueId(), false);
+    List<Plot> plots = InfiniPlots.getInstance().getPlotManager().getPlots(player.getUniqueId(), false);
     if (plots.size() >= max) {
       player.sendMessage(ChatUtils.altColorsf("&cPlot count limit reached. Can only own a max of &b%s&c plots", max));
       return;
     }
-    int localId = 1;
+    int ownerPlotId = 1;
     // finds the first available local ID for this plot
     for (Plot plot : plots) {
-      if (plot.localId() == localId) {
-        localId++;
+      if (plot.ownerPlotId() == ownerPlotId) {
+        ownerPlotId++;
       } else {
         break;
       }
     }
-    ChunkPos pos;
-    if (here) {
-      Chunk chunk = player.getLocation().getChunk();
-      pos = new ChunkPos(chunk.getX(), chunk.getZ());
-      if (pos.x() % 2 != 0 || pos.z() % 2 != 0) {
-        player.sendMessage(ChatUtils.altColors("&cYou are not in a plot"));
-        return;
-      }
-      if (plotWorld.getAllPositions().containsKey(pos)) {
-        player.sendMessage(ChatUtils.altColors("&cThis plot has already been claimed"));
-        return;
-      }
-    } else {
-      pos = plotWorld.getNextAvailableChunkPos();
+    Location location = plotWorld.generator.getTeleportLocation(world, plotNumber);
+    if (location == null) {
+      player.sendMessage(ChatUtils.altColors("&cCould not determine plot location"));
+      return;
     }
-    // TODO Allow claiming of plot at argument-specified chunk position
-    InfiniPlots.getInstance().getPlots().addPlot(player, localId, world.getUID(), pos);
-    player.sendMessage(ChatUtils.altColorsf("Successfully claimed a plot in &b%s&r at (&e%d&r,&e%d&r). This plot's local ID is &a%d&r", world.getName(), pos.x(), pos.z(), localId));
-    teleportToPlot_do(player, world, pos);
+    InfiniPlots.getInstance().getPlotManager().addPlot(world.getUID(), plotNumber, player.getUniqueId(), ownerPlotId);
+    plotWorld.nextPlotNumber = plotWorld.calculateNextUnclaimedPlot();
+    player.sendMessage(ChatUtils.altColorsf("Successfully claimed plot #&b%s&r in &e%s&r (OID: &a%d&r)", ownerPlotId, world.getName(), ownerPlotId));
+    player.teleport(location);
   }
 
   private void getInfo(CommandSender sender, String[] args) {
@@ -300,7 +275,8 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
       return;
     }
     World world;
-    ChunkPos pos;
+    PlotWorld plotWorld;
+    int worldPlotId;
     Plot plot;
     if (args.length == 0) {
       if (!(sender instanceof Player player)) {
@@ -308,58 +284,74 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
         return;
       }
       world = player.getWorld();
-      PlotWorld plotWorld = InfiniPlots.getInstance().getPlots().getPlotWorld(world.getUID());
+      plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(world.getUID());
       if (plotWorld == null) {
         player.sendMessage(ChatUtils.altColors("&cNo plot found"));
         return;
       }
-      pos = plotWorld.getPlotPos(new ChunkPos(player.getLocation()));
-      if (pos == null) {
+      worldPlotId = plotWorld.generator.getPlotNumber(new ChunkPos(player.getLocation()));
+      if (worldPlotId < 1) {
         player.sendMessage(ChatUtils.altColors("&cNo plot found"));
         return;
       }
-      UUID plotId = plotWorld.getAllPositions().get(pos);
-      if (plotId != null) {
-        plot = InfiniPlots.getInstance().getPlots().getPlot(plotId, true);
-      } else {
-        plot = null;
-      }
     } else {
-      try {
-        UUID plotId = UUID.fromString(args[0]);
-        plot = InfiniPlots.getInstance().getPlots().getPlot(plotId, true);
-        if (plot == null) {
-          throw new IllegalArgumentException();
-        }
-        world = Bukkit.getWorld(plot.world());
+      if (args.length > 1) {
+        String worldName = args[2];
+        world = Bukkit.getWorld(worldName);
         if (world == null) {
-          sender.sendMessage(ChatUtils.altColorsf("&cPlot &b%s&c found with invalid world ID &e%s", plot.id(), plot.world()));
+          sender.sendMessage(ChatUtils.altColorsf("&cWorld %s not found", worldName));
           return;
         }
-        pos = plot.pos();
-      } catch (IllegalArgumentException e) {
-        sender.sendMessage(ChatUtils.altColorsf("&cNo plot found with ID of &b%s", args[0]));
+      } else {
+        if (!(sender instanceof Player player)) {
+          ChatUtils.onlyPlayer(sender);
+          return;
+        }
+        world = player.getWorld();
+      }
+      plotWorld = InfPlotUtils.getPlotWorldOrDefault(world.getUID());
+      if (plotWorld == null) {
+        sender.sendMessage(ChatUtils.altColors("&cCould not get plot world"));
+        return;
+      }
+      world = plotWorld.world;
+      try {
+        worldPlotId = Integer.parseInt(args[0]);
+        if (worldPlotId < 1 || worldPlotId > plotWorld.generator.getMaxClaims()) {
+          throw new NumberFormatException();
+        }
+      } catch (NumberFormatException e) {
+        sender.sendMessage(ChatUtils.altColorsf("&cInvalid plot number: %s", args[0]));
         return;
       }
     }
+    plot = InfiniPlots.getInstance().getPlotManager().getPlot(new PlotId(world.getUID(), worldPlotId), true);
     String[] messages;
     if (plot == null) {
       messages = new String[2];
       messages[1] = ChatUtils.altColors("- &7&oThis plot is unclaimed");
     } else {
-      messages = new String[5];
-      messages[1] = ChatUtils.altColorsf("- &7ID&r: &b%s", plot.id());
-      messages[2] = ChatUtils.altColorsf("- &7Owner&r: &b%s&r (&a%s&r)", PlayerUtils.getOfflinePlayerName(plot.owner()), plot.owner());
-      messages[3] = ChatUtils.altColorsf("- &7Local ID&r: &b%d", plot.localId());
+      messages = new String[7];
+      messages[1] = ChatUtils.altColorsf("- &7World: &b%s", world.getName());
+      messages[2] = ChatUtils.altColorsf("- &7Plot Number&r: &b%s", plot.worldPlotId());
+      messages[3] = ChatUtils.altColorsf("- &7Owner&r: &b%s&r (&a%s&r)", PlayerUtils.getOfflinePlayerName(plot.owner()), plot.owner());
+      messages[4] = ChatUtils.altColorsf("- &7Owner ID&r: &b%d", plot.ownerPlotId());
       String membersString;
       if (plot.members().isEmpty()) {
         membersString = "&b&o<none>&r";
       } else {
         membersString = plot.members().stream().map(memberId -> "&b" + PlayerUtils.getOfflinePlayerName(memberId) + "&r").collect(Collectors.joining(", "));
       }
-      messages[4] = ChatUtils.altColorsf("- &7Members&r: %s", membersString);
+      messages[5] = ChatUtils.altColorsf("- &7Members&r: %s", membersString);
+      String flagsString;
+      if (plot.flags().isEmpty()) {
+        flagsString = "&b&o<none>&r";
+      } else {
+        flagsString = plot.flags().stream().map(flag -> "&b" + flag + "&r").collect(Collectors.joining(", "));
+      }
+      messages[6] = ChatUtils.altColorsf("- &7Flags&r: %s", flagsString);
     }
-    messages[0] = ChatUtils.altColorsf("&7===&r Information for Plot in &b%s&r at &e%d&r,&e%d&r &7===", world.getName(), pos.x(), pos.z());
+    messages[0] = ChatUtils.altColorsf("&7===&r Information for Plot #&b%s&r in &b%s&r &7===", worldPlotId, world.getName());
     sender.sendMessage(messages);
   }
 

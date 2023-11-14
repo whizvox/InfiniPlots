@@ -14,13 +14,13 @@ public class CheckEntityPlotBoundsTask implements Runnable {
 
   @Override
   public void run() {
-    InfiniPlots.getInstance().getPlots().plotWorlds().forEach(entry -> {
+    InfiniPlots.getInstance().getPlotManager().plotWorlds().forEach(entry -> {
       PlotWorld plotWorld = entry.getValue();
       plotWorld.world.getEntities().forEach(entity -> {
         if (!(entity instanceof Player)) {
           if (!entity.getVelocity().isZero()) {
-            ChunkPos pos = plotWorld.getPlotPos(new ChunkPos(entity.getLocation()));
-            if (!plotWorld.getAllPositions().containsKey(pos)) {
+            ChunkPos pos = new ChunkPos(entity.getLocation());
+            if (!plotWorld.generator.inPlot(pos.x(), pos.z())) {
               entity.remove();
             }
           }
