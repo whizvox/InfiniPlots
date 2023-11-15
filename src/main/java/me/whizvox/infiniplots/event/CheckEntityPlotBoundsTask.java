@@ -1,7 +1,6 @@
 package me.whizvox.infiniplots.event;
 
 import me.whizvox.infiniplots.InfiniPlots;
-import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChunkPos;
 import org.bukkit.entity.Player;
 
@@ -14,8 +13,7 @@ public class CheckEntityPlotBoundsTask implements Runnable {
 
   @Override
   public void run() {
-    InfiniPlots.getInstance().getPlotManager().plotWorlds().forEach(entry -> {
-      PlotWorld plotWorld = entry.getValue();
+    InfiniPlots.getInstance().getPlotManager().plotWorlds().forEach(plotWorld -> {
       plotWorld.world.getEntities().forEach(entity -> {
         if (!(entity instanceof Player)) {
           if (!entity.getVelocity().isZero()) {

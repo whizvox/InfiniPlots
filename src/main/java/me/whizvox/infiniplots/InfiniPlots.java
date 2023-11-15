@@ -1,7 +1,7 @@
 package me.whizvox.infiniplots;
 
-import me.whizvox.infiniplots.command.InfPlotsAdminCommandExecutor;
-import me.whizvox.infiniplots.command.InfPlotsCommandExecutor;
+import me.whizvox.infiniplots.command.CommandDelegator;
+import me.whizvox.infiniplots.command.lib.InfiniPlotsCommandDelegator;
 import me.whizvox.infiniplots.event.CheckEntityPlotBoundsTask;
 import me.whizvox.infiniplots.event.GriefPreventionEventsListener;
 import me.whizvox.infiniplots.plot.PlotManager;
@@ -9,6 +9,7 @@ import me.whizvox.infiniplots.util.PlotOwnerTiers;
 import me.whizvox.infiniplots.worldgen.PlotWorldGeneratorRegistry;
 import me.whizvox.infiniplots.worldgen.PlotWorldPlainGenerator;
 import org.bukkit.Bukkit;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -23,6 +24,13 @@ import java.util.Map;
 import java.util.logging.Level;
 
 public final class InfiniPlots extends JavaPlugin {
+
+  public static final String
+      CFG_DEFAULT_PLOT_WORLD = "defaultPlotWorld",
+      CFG_DEFAULT_MAX_PLOTS = "defaultMaxPlots",
+      CFG_PLOT_OWNER_TIERS = "plotOwnerTiers",
+      CFG_DEFAULT_PLOT_WORLD_GENERATOR = "defaultPlotWorldGenerator",
+      CFG_CHECK_PLOT_ENTITY_BOUNDS = "checkPlotEntityBounds";
 
   private static InfiniPlots instance = null;
 
@@ -57,20 +65,20 @@ public final class InfiniPlots extends JavaPlugin {
     ConfigurationSerialization.registerClass(PlotOwnerTiers.class);
     getDataFolder().mkdirs();
 
-    getConfig().addDefault("defaultPlotWorld", "world");
-    getConfig().addDefault("defaultMaxPlots", 1);
-    getConfig().addDefault("plotOwnerTiers", PlotOwnerTiers.DEFAULT);
-    getConfig().addDefault("defaultPlotWorldGenerator", "plains2");
-    getConfig().addDefault("checkEntityPlotBounds", 4);
+    getConfig().addDefault(CFG_DEFAULT_PLOT_WORLD, "world");
+    getConfig().addDefault(CFG_DEFAULT_MAX_PLOTS, 1);
+    getConfig().addDefault(CFG_PLOT_OWNER_TIERS, PlotOwnerTiers.DEFAULT);
+    getConfig().addDefault(CFG_DEFAULT_PLOT_WORLD_GENERATOR, "plains2");
+    getConfig().addDefault(CFG_CHECK_PLOT_ENTITY_BOUNDS, 4);
     //getConfig().addDefault("useWorldGuardIfLoaded", true);
 
     getConfig().options().copyDefaults(true);
 
-    getConfig().setComments("defaultPlotWorld", List.of("The default plot world assigned when a player wants to claim a new plot"));
-    getConfig().setComments("defaultMaxPlots", List.of("Maximum number of plots one can own by default"));
-    getConfig().setComments("plotOwnerTiers", List.of("List of tiers that are available to players regarding how many plots they can own"));
-    getConfig().setComments("defaultPlotWorldGenerator", List.of("Default plot world generator to be used"));
-    getConfig().setComments("checkEntityPlotBounds", List.of(
+    getConfig().setComments(CFG_DEFAULT_PLOT_WORLD, List.of("The default plot world assigned when a player wants to claim a new plot"));
+    getConfig().setComments(CFG_DEFAULT_MAX_PLOTS, List.of("Maximum number of plots one can own by default"));
+    getConfig().setComments(CFG_PLOT_OWNER_TIERS, List.of("List of tiers that are available to players regarding how many plots they can own"));
+    getConfig().setComments(CFG_DEFAULT_PLOT_WORLD_GENERATOR, List.of("Default plot world generator to be used"));
+    getConfig().setComments(CFG_CHECK_PLOT_ENTITY_BOUNDS, List.of(
         "Interval (in ticks) in which entities from plot worlds are removed if they go outside the bounds of a plot",
         "This is used to prevent griefing and lag from mobile entities that could move outside of their origin plots",
         "For example: a value of 2 means this is checked every 2 ticks, or 10 times per second",
@@ -83,7 +91,7 @@ public final class InfiniPlots extends JavaPlugin {
     saveConfig();
 
     ownerTiers = new HashMap<>();
-    ownerTiers.putAll(getConfig().getSerializable("plotOwnerTiers", PlotOwnerTiers.class).tiers);
+    ownerTiers.putAll(getConfig().getSerializable(CFG_PLOT_OWNER_TIERS, PlotOwnerTiers.class).tiers);
 
     plotGenRegistry = new PlotWorldGeneratorRegistry();
     for (int i = 1; i <= 4; i++) {
@@ -99,11 +107,13 @@ public final class InfiniPlots extends JavaPlugin {
       throw new RuntimeException("Could not use SQLite database", e);
     }
 
-    getCommand("infiniplotsadmin").setExecutor(new InfPlotsAdminCommandExecutor());
-    getCommand("infiniplots").setExecutor(new InfPlotsCommandExecutor());
+    PluginCommand command = getCommand("infiniplots");
+    CommandDelegator delegator = new InfiniPlotsCommandDelegator();
+    command.setExecutor(delegator);
+    command.setTabCompleter(delegator);
 
     getServer().getPluginManager().registerEvents(new GriefPreventionEventsListener(), this);
-    int entityCheckInterval = getConfig().getInt("checkEntityPlotBounds");
+    int entityCheckInterval = getConfig().getInt(CFG_CHECK_PLOT_ENTITY_BOUNDS);
     if (entityCheckInterval < 1) {
       getLogger().info("Entity plot bounds checking has been disabled");
     } else {

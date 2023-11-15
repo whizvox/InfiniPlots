@@ -3,6 +3,7 @@ package me.whizvox.infiniplots.db;
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.plot.PlotId;
+import me.whizvox.infiniplots.util.Page;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
@@ -14,6 +15,8 @@ import java.util.logging.Level;
 
 public class PlotRepository extends Repository {
 
+  private static final int PAGE_SIZE = 10;
+
   private static final String
       CREATE_TABLE = "CREATE TABLE IF NOT EXISTS plots(" +
         "world CHAR(36) NOT NULL, " +
@@ -24,10 +27,13 @@ public class PlotRepository extends Repository {
         "UNIQUE (owner,owner_plot_id)" +
       ")",
       SELECT_ALL = "SELECT world,world_plot_id,owner,owner_plot_id FROM plots",
+      SELECT_BY_WORLD = SELECT_ALL + " WHERE world=? ORDER BY world_plot_id LIMIT ? OFFSET ?",
       SELECT_BY_WORLD_AND_ID = SELECT_ALL + " WHERE world=? AND world_plot_id=?",
       SELECT_BY_OWNER = SELECT_ALL + " WHERE owner=? ORDER BY owner_plot_id",
       SELECT_BY_OWNER_AND_ID = SELECT_ALL + " WHERE owner=? AND owner_plot_id=?",
+      SELECT_ALL_OWNERS = "SELECT DISTINCT owner FROM plots",
       SELECT_LAST_PLOT_NUMBER = "SELECT world_plot_id FROM plots WHERE world=? ORDER BY world_plot_id ASC LIMIT 1",
+      SELECT_COUNT = "SELECT COUNT(*) FROM plots",
       INSERT = "INSERT INTO plots (world,world_plot_id,owner,owner_plot_id) VALUES (?,?,?,?)",
       UPDATE_FORMAT = "UPDATE plots SET %s WHERE world=? AND world_plot_id=?",
       UPDATE_OWNER = UPDATE_FORMAT.formatted("owner=?"),
@@ -48,14 +54,32 @@ public class PlotRepository extends Repository {
     execute(CREATE_TABLE);
   }
 
+  public int getCount() {
+    return executeQuery(SELECT_COUNT, List.of(), rs -> {
+      rs.next();
+      return rs.getInt(1);
+    });
+  }
+
   @Nullable
-  public Plot getByWorld(UUID worldId, int worldPlotId, boolean populate) {
+  public Plot get(UUID worldId, int worldPlotId, boolean populate) {
     return executeQuery(SELECT_BY_WORLD_AND_ID, List.of(worldId, worldPlotId), rs -> {
       if (rs.next()) {
         return fromRow(rs, populate);
       } else {
         return null;
       }
+    });
+  }
+
+  public Page<Plot> getByWorld(UUID worldId, int page, boolean populate) {
+    return executeQuery(SELECT_BY_WORLD, List.of(worldId, PAGE_SIZE, page * PAGE_SIZE), rs -> {
+      List<Plot> items = new ArrayList<>();
+      while (rs.next()) {
+        items.add(fromRow(rs, populate));
+      }
+      int count = getCount();
+      return new Page<>(page, PAGE_SIZE, count, count / PAGE_SIZE, items);
     });
   }
 
@@ -99,6 +123,16 @@ public class PlotRepository extends Repository {
     });
   }
 
+  public void forEachOwner(Consumer<UUID> consumer) {
+    executeQuery(SELECT_ALL_OWNERS, List.of(), rs -> {
+      while (rs.next()) {
+        UUID ownerId = UUID.fromString(rs.getString(1));
+        consumer.accept(ownerId);
+      }
+      return null;
+    });
+  }
+
   public void insert(Plot plot) {
     executeUpdate(INSERT, List.of(plot.world(), plot.worldPlotId(), plot.owner(), plot.ownerPlotId()));
     if (plot.members() != null) {
@@ -110,7 +144,7 @@ public class PlotRepository extends Repository {
   }
 
   public void updateOwner(UUID worldId, int worldPlotId, UUID newOwner) {
-    Plot plot = getByWorld(worldId, worldPlotId, false);
+    Plot plot = get(worldId, worldPlotId, false);
     if (plot != null) {
       executeUpdate(UPDATE_OWNER, List.of(newOwner, worldId, worldPlotId));
       memberRepo.removeMember(worldId, worldPlotId, newOwner);

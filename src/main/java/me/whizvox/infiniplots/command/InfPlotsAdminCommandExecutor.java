@@ -67,7 +67,7 @@ public class InfPlotsAdminCommandExecutor implements CommandExecutor {
     if (args.length > 1) {
       generatorKey = args[1];
     } else {
-      generatorKey = InfiniPlots.getInstance().getConfig().getString("defaultPlotWorldGenerator");
+      generatorKey = InfiniPlots.getInstance().getConfig().getString(InfiniPlots.CFG_DEFAULT_PLOT_WORLD_GENERATOR);
     }
     PlotWorldGenerator generator = InfiniPlots.getInstance().getPlotGenRegistry().getGenerator(generatorKey);
     if (generator == null) {

@@ -7,14 +7,8 @@ description: Plots plugin
 softdepend:
   - WorldGuard
 commands:
-  infiniplotsadmin:
-    description: Admin command for InfiniPlots
-    usage: /infiniplotsadmin <genworld>
-    permission: infiniplots.admin
-    aliases:
-      - infpa
   infiniplots:
-    description: Generale usage command for InfiniPlots
-    usage: /infiniplots <tp | tpo | tpi | tpw | claim | claimhere | info>
+    description: General command for InfiniPlots
     aliases:
+      - plots
       - infp

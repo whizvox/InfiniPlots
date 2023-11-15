@@ -41,8 +41,16 @@ public class PlotManager {
     defaultWorld = null;
   }
 
-  public Stream<Map.Entry<UUID, PlotWorld>> plotWorlds() {
-    return worlds.entrySet().stream();
+  public PlotRepository getPlotRepository() {
+    return plotRepo;
+  }
+
+  public PlotWorldRepository getWorldRepository() {
+    return worldRepo;
+  }
+
+  public Stream<PlotWorld> plotWorlds() {
+    return worlds.values().stream();
   }
 
   @Nullable
@@ -52,7 +60,7 @@ public class PlotManager {
 
   @Nullable
   public Plot getPlot(PlotId plotId, boolean populate) {
-    return plotRepo.getByWorld(plotId.world(), plotId.plot(), populate);
+    return plotRepo.get(plotId.world(), plotId.plot(), populate);
   }
 
   @Nullable
@@ -83,7 +91,7 @@ public class PlotManager {
     worldFlagsRepo.initialize();
     worldRepo.initialize();
 
-    defaultWorldName = InfiniPlots.getInstance().getConfig().getString("defaultPlotWorld");
+    defaultWorldName = InfiniPlots.getInstance().getConfig().getString(InfiniPlots.CFG_DEFAULT_PLOT_WORLD);
     defaultWorld = null;
     worldRepo.forEach(props -> {
       PlotWorldGenerator generator = InfiniPlots.getInstance().getPlotGenRegistry().getGenerator(props.generator());
@@ -102,7 +110,7 @@ public class PlotManager {
         if (props.id().equals(world.getUID())) {
           PlotWorld plotWorld = new PlotWorld(props.name(), generator, world);
           plotWorld.worldFlags.addAll(props.flags());
-          plotWorld.nextPlotNumber = plotRepo.getLastPlotNumber(props.id());
+          plotWorld.nextPlotNumber = plotRepo.getLastPlotNumber(props.id()) + 1;
           worlds.put(props.id(), plotWorld);
           if (props.name().equals(defaultWorldName)) {
             defaultWorld = plotWorld;
@@ -112,6 +120,17 @@ public class PlotManager {
         }
       } else {
         InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world (%s) since its generator (%s) is not registered", new Object[] {props.id(), props.generator()});
+      }
+    }, true);
+    Set<UUID> unknownPlotWorlds = new HashSet<>();
+    plotRepo.forEach(plot -> {
+      PlotWorld plotWorld = getPlotWorld(plot.world());
+      if (plotWorld != null) {
+        plotWorld.add(plot);
+      } else {
+        if (unknownPlotWorlds.add(plot.world())) {
+          InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Found plot belonging to unknown world %s", plot.world());
+        }
       }
     }, true);
   }

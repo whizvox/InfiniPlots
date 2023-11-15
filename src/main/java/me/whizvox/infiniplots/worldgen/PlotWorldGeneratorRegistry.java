@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Stream;
 
 public class PlotWorldGeneratorRegistry {
 
@@ -22,6 +23,10 @@ public class PlotWorldGeneratorRegistry {
 
   public void forEach(BiConsumer<String, PlotWorldGenerator> consumer) {
     generators.forEach(consumer);
+  }
+
+  public Stream<Map.Entry<String, PlotWorldGenerator>> generators() {
+    return generators.entrySet().stream();
   }
 
   @Nullable

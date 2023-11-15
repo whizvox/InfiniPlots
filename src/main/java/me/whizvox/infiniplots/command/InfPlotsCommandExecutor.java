@@ -5,7 +5,10 @@ import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.*;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -13,9 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class InfPlotsCommandExecutor implements CommandExecutor {
@@ -26,30 +27,44 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
       PERMISSION_CLAIM = PermissionUtils.buildPermission("claim"),
       PERMISSION_CLAIM_INF = PERMISSION_CLAIM + ".inf",
       PERMISSION_INFO = PermissionUtils.buildPermission("info"),
+      PERMISSION_LIST_PLOTS_IN_WORLD = PermissionUtils.buildPermission("list.plots.world"),
+      PERMISSION_LIST_PLOTS_BY_PLAYER = PermissionUtils.buildPermission("list.plots.player"),
+      PERMISSION_LIST_WORLDS = PermissionUtils.buildPermission("list.worlds"),
+      PERMISSION_LIST_GENERATORS = PermissionUtils.buildPermission("list.generators"),
 
       USAGE_TP = ChatUtils.buildUsage("tp <plot number> [<world>]"),
       USAGE_TP_OWNER = ChatUtils.buildUsage("tpo <owner> [<owner plot number>]"),
       USAGE_TPWORLD = ChatUtils.buildUsage("tpw <world>"),
       USAGE_CLAIM = ChatUtils.buildUsage("claim [<plot number> [<world>]]"),
-      USAGE_INFO = ChatUtils.buildUsage("info [<plot number> [<world>]]");
+      USAGE_CLAIMHERE = ChatUtils.buildUsage("claimhere"),
+      USAGE_INFO = ChatUtils.buildUsage("info [<plot number> [<world>]]"),
+      USAGE_WORLDINFO = ChatUtils.buildUsage("worldinfo [<world>]"),
+      USAGE_LIST = ChatUtils.buildUsage("list [plots [<owner>] | worldplots [<world>] | worlds | generators]");
+
+  private static final List<String> USAGES;
+
+  static {
+    List<String> usagesTemp = new ArrayList<>();
+    Collections.addAll(usagesTemp, USAGE_TP, USAGE_TP_OWNER, USAGE_TPWORLD, USAGE_CLAIM, USAGE_CLAIMHERE, USAGE_INFO, USAGE_WORLDINFO, USAGE_LIST);
+    usagesTemp.sort(Comparator.naturalOrder());
+    USAGES = Collections.unmodifiableList(usagesTemp);
+  }
 
   @Override
   public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
-    if (!(sender instanceof Player player)) {
-      sender.sendMessage(ChatUtils.altColors("&cCommand sender must be a player"));
-      return true;
-    }
     if (args.length == 0) {
       return false;
     }
     String[] remainingArgs = Arrays.copyOfRange(args, 1, args.length);
     switch (args[0]) {
-      case "tp" -> teleportToPlotWithPlotNumber(player, remainingArgs);
-      case "tpo" -> teleportToPlotWithOwner(player, remainingArgs);
-      case "tpw" -> teleportToWorld(player, remainingArgs);
-      case "claim" -> claim(player, false, remainingArgs);
-      case "claimhere" -> claim(player, true, remainingArgs);
-      case "info" -> getInfo(player, remainingArgs);
+      case "help", "?" -> help(sender, remainingArgs);
+      case "tp" -> teleportToPlotWithPlotNumber(sender, remainingArgs);
+      case "tpo" -> teleportToPlotWithOwner(sender, remainingArgs);
+      case "tpw" -> teleportToWorld(sender, remainingArgs);
+      case "claim" -> claim(sender, false, remainingArgs);
+      case "claimhere" -> claim(sender, true, remainingArgs);
+      case "info" -> getInfo(sender, remainingArgs);
+      case "list" -> list(sender, remainingArgs);
       default -> {
         return false;
       }
@@ -57,7 +72,29 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     return true;
   }
 
-  private void teleportToWorld(Player player, String[] args) {
+  private void help(CommandSender sender, String[] args) {
+    if (args.length == 0) {
+      sender.sendMessage(USAGES.toArray(String[]::new));
+    } else {
+      String arg = args[0];
+      /*String msg = switch (arg) {
+        case "tp" -> USAGE_TP;
+        case "tpo" -> USAGE_TP_OWNER;
+        case "tpw" -> USAGE_TPWORLD;
+        case "claim" -> USAGE_CLAIM;
+        case "claimhere" -> USAGE_CLAIMHERE;
+        case "info" -> USAGE_INFO;
+        case "worldinfo" -> USAGE_WORLDINFO;
+        case "list" -> USAGE_LIST;
+      };*/
+    }
+  }
+
+  private void teleportToWorld(CommandSender sender, String[] args) {
+    if (!(sender instanceof Player player)) {
+      ChatUtils.onlyPlayer(sender);
+      return;
+    }
     if (!player.hasPermission(PERMISSION_TPWORLD)) {
       ChatUtils.notPermitted(player);
       return;
@@ -76,7 +113,11 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     player.teleport(world.getSpawnLocation(), PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 
-  private void teleportToPlotWithPlotNumber(Player player, String[] args) {
+  private void teleportToPlotWithPlotNumber(CommandSender sender, String[] args) {
+    if (!(sender instanceof Player player)) {
+      ChatUtils.onlyPlayer(sender);
+      return;
+    }
     if (args.length < 1) {
       player.sendMessage(USAGE_TP);
       return;
@@ -117,7 +158,11 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     player.teleport(location, PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 
-  private void teleportToPlotWithOwner(Player player, String[] args) {
+  private void teleportToPlotWithOwner(CommandSender sender, String[] args) {
+    if (!(sender instanceof Player player)) {
+      ChatUtils.onlyPlayer(sender);
+      return;
+    }
     if (!player.hasPermission(PERMISSION_TPPLOT)) {
       ChatUtils.notPermitted(player);
       return;
@@ -179,7 +224,11 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
     player.teleport(location, PlayerTeleportEvent.TeleportCause.COMMAND);
   }
 
-  private void claim(Player player, boolean here, String[] args) {
+  private void claim(CommandSender sender, boolean here, String[] args) {
+    if (!(sender instanceof Player player)) {
+      ChatUtils.onlyPlayer(sender);
+      return;
+    }
     if (!player.hasPermission(PERMISSION_CLAIM)) {
       ChatUtils.notPermitted(player);
       return;
@@ -325,34 +374,136 @@ public class InfPlotsCommandExecutor implements CommandExecutor {
         return;
       }
     }
-    plot = InfiniPlots.getInstance().getPlotManager().getPlot(new PlotId(world.getUID(), worldPlotId), true);
-    String[] messages;
-    if (plot == null) {
-      messages = new String[2];
-      messages[1] = ChatUtils.altColors("- &7&oThis plot is unclaimed");
+
+  }
+
+  private void list(CommandSender sender, String[] args) {
+    String type;
+    if (args.length == 0) {
+      type = "plots";
     } else {
-      messages = new String[7];
-      messages[1] = ChatUtils.altColorsf("- &7World: &b%s", world.getName());
-      messages[2] = ChatUtils.altColorsf("- &7Plot Number&r: &b%s", plot.worldPlotId());
-      messages[3] = ChatUtils.altColorsf("- &7Owner&r: &b%s&r (&a%s&r)", PlayerUtils.getOfflinePlayerName(plot.owner()), plot.owner());
-      messages[4] = ChatUtils.altColorsf("- &7Owner ID&r: &b%d", plot.ownerPlotId());
-      String membersString;
-      if (plot.members().isEmpty()) {
-        membersString = "&b&o<none>&r";
-      } else {
-        membersString = plot.members().stream().map(memberId -> "&b" + PlayerUtils.getOfflinePlayerName(memberId) + "&r").collect(Collectors.joining(", "));
-      }
-      messages[5] = ChatUtils.altColorsf("- &7Members&r: %s", membersString);
-      String flagsString;
-      if (plot.flags().isEmpty()) {
-        flagsString = "&b&o<none>&r";
-      } else {
-        flagsString = plot.flags().stream().map(flag -> "&b" + flag + "&r").collect(Collectors.joining(", "));
-      }
-      messages[6] = ChatUtils.altColorsf("- &7Flags&r: %s", flagsString);
+      type = args[0];
+
     }
-    messages[0] = ChatUtils.altColorsf("&7===&r Information for Plot #&b%s&r in &b%s&r &7===", worldPlotId, world.getName());
-    sender.sendMessage(messages);
+    List<String> messages = new ArrayList<>();
+    switch (type) {
+      case "plots" -> {
+        UUID ownerId;
+        if (args.length > 1) {
+          if (!sender.hasPermission(PERMISSION_LIST_PLOTS_BY_PLAYER)) {
+            ChatUtils.notPermitted(sender);
+            return;
+          }
+          OfflinePlayer owner = PlayerUtils.getOfflinePlayer(args[1]);
+          if (owner == null) {
+            sender.sendMessage(ChatUtils.altColors("&cThat player could not be found"));
+            return;
+          }
+          ownerId = owner.getUniqueId();
+        } else {
+          if (!(sender instanceof Player player)) {
+            ChatUtils.onlyPlayer(sender);
+            return;
+          }
+          ownerId = player.getUniqueId();
+        }
+        List<Plot> plots = InfiniPlots.getInstance().getPlotManager().getPlots(ownerId, false);
+        messages.add(ChatUtils.altColorsf("&7=== List of &b%s&r's Plots &7==="));
+        if (plots.isEmpty()) {
+          messages.add(ChatUtils.altColors("- &7No plots found"));
+        } else {
+          plots.forEach(plot -> {
+            PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(plot.world());
+            String worldStr;
+            if (plotWorld == null) {
+              worldStr = ChatUtils.altColorsf("&o%s", "<unknown>");
+            } else {
+              worldStr = plotWorld.world.getName();
+            }
+            messages.add(ChatUtils.altColorsf("- &7World: &b%s&r, &7WID&r: &e%s&r, &7OID&r: &e%s", worldStr, plot.worldPlotId(), plot.ownerPlotId()));
+          });
+        }
+      }
+      case "worldplots" -> {
+        if (!sender.hasPermission(PERMISSION_LIST_PLOTS_IN_WORLD)) {
+          ChatUtils.notPermitted(sender);
+          return;
+        }
+        PlotWorld plotWorld;
+        if (args.length > 1) {
+          String worldName = args[1];
+          World world = Bukkit.getWorld(worldName);
+          if (world == null) {
+            ChatUtils.worldDoesNotExist(sender, worldName);
+            return;
+          }
+          plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(world.getUID());
+          if (plotWorld == null) {
+            ChatUtils.notPlotWorld(sender, worldName);
+            return;
+          }
+        } else {
+          if (!(sender instanceof Player player)) {
+            ChatUtils.onlyPlayer(sender);
+            return;
+          }
+          plotWorld = InfPlotUtils.getPlotWorldOrDefault(player.getWorld().getUID());
+          if (plotWorld == null) {
+            ChatUtils.defaultWorldNotSetup(sender);
+            return;
+          }
+        }
+        int page;
+        if (args.length > 2) {
+          String pageStr = args[2];
+          try {
+            page = Integer.parseInt(pageStr) - 1;
+            if (page < 0) {
+              throw new NumberFormatException();
+            }
+          } catch (NumberFormatException e) {
+            sender.sendMessage(ChatUtils.altColorsf("&cInvalid page number: &b%s", pageStr));
+            return;
+          }
+        } else {
+          page = 0;
+        }
+        Page<Plot> plots = InfiniPlots.getInstance().getPlotManager().getPlotRepository().getByWorld(plotWorld.world.getUID(), page, false);
+        messages.add(ChatUtils.altColorsf("&7=== Plots List for &b%s&r &7===", plotWorld.world.getName()));
+        if (plots.items().isEmpty()) {
+          messages.add(ChatUtils.altColors("- &7This world has no claimed plots"));
+        } else {
+          plots.items().forEach(plot -> {
+            String ownerName = PlayerUtils.getOfflinePlayerName(plot.owner());
+            messages.add(ChatUtils.altColorsf("- &7WID: &b%s&r, &7Owner: &e%s&r, &7OID: &a%s", plot.worldPlotId(), ownerName, plot.ownerPlotId()));
+          });
+        }
+      }
+      case "worlds" -> {
+        if (!sender.hasPermission(PERMISSION_LIST_WORLDS)) {
+          ChatUtils.notPermitted(sender);
+          return;
+        }
+        messages.add(ChatUtils.altColors("&7===&r List of Plot Worlds &7==="));
+        InfiniPlots.getInstance().getPlotManager().plotWorlds()
+            .sorted(Comparator.comparing(o -> o.world.getName()))
+            .map(pw -> ChatUtils.altColorsf("- &b%s%r (&a%s&r)", pw.world.getName(), pw.world.getUID()))
+            .forEach(messages::add);
+      }
+      case "generators" -> {
+        if (!sender.hasPermission(PERMISSION_LIST_GENERATORS)) {
+          ChatUtils.notPermitted(sender);
+          return;
+        }
+        messages.add(ChatUtils.altColors("&7===&r List of Plot World Generators &7==="));
+        InfiniPlots.getInstance().getPlotGenRegistry().generators()
+            .map(Map.Entry::getKey)
+            .sorted()
+            .forEach(genKey -> messages.add(ChatUtils.altColorsf("- &b%s", genKey)));
+      }
+      default -> messages.add(ChatUtils.altColorsf("&cUnknown type: &b%s", type));
+    }
+    sender.sendMessage(messages.toArray(String[]::new));
   }
 
 }
