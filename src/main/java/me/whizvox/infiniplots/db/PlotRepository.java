@@ -78,6 +78,7 @@ public class PlotRepository extends Repository {
       while (rs.next()) {
         items.add(fromRow(rs, populate));
       }
+      // FIXME Use count by world instead of total row count
       int count = getCount();
       return new Page<>(page, PAGE_SIZE, count, count / PAGE_SIZE, items);
     });

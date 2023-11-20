@@ -113,10 +113,10 @@ public class ListCommandHandler extends CommandHandler {
         NotEnoughPermissionException.check(sender, PERMISSION_LIST_PLOTS_IN_WORLD);
         PlotWorld plotWorld = ArgumentHelper.getPlotWorld(context, 1);
         int page = ArgumentHelper.getInt(context, 2, () -> 1, 1, Integer.MAX_VALUE);
-        Page<Plot> plots = InfiniPlots.getInstance().getPlotManager().getPlotRepository().getByWorld(plotWorld.world.getUID(), page, false);
-        message.add("&7===&r Plots List for &b%s&r &7===".formatted(plotWorld.world.getName()));
+        Page<Plot> plots = InfiniPlots.getInstance().getPlotManager().getPlotRepository().getByWorld(plotWorld.world.getUID(), page - 1, false);
+        message.add("&7===&r Plots List for &b%s&r (&e%d&r,&e%d&r) &7===".formatted(plotWorld.world.getName(), page, plots.totalPages()));
         if (plots.items().isEmpty()) {
-          message.add("- &7This world has no claimed plots");
+          message.add("- &7No plots found");
         } else {
           plots.items().forEach(plot -> {
             String ownerName = PlayerUtils.getOfflinePlayerName(plot.owner());

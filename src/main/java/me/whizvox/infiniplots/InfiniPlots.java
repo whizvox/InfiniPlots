@@ -42,6 +42,7 @@ public final class InfiniPlots extends JavaPlugin {
   private PlotManager plotManager = null;
   private Map<String, Integer> ownerTiers = null;
   private PlotWorldGeneratorRegistry plotGenRegistry = null;
+  private ConfirmationManager confirmationManager = null;
   private int checkEntityPlotsTask = -1;
 
   public PlotManager getPlotManager() {
@@ -57,6 +58,10 @@ public final class InfiniPlots extends JavaPlugin {
 
   public PlotWorldGeneratorRegistry getPlotGenRegistry() {
     return plotGenRegistry;
+  }
+
+  public ConfirmationManager getConfirmationManager() {
+    return confirmationManager;
   }
 
   @Override
@@ -120,6 +125,8 @@ public final class InfiniPlots extends JavaPlugin {
       getLogger().info("Entity plot bounds checking has been enabled every " + entityCheckInterval + " ticks");
       checkEntityPlotsTask = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new CheckEntityPlotBoundsTask(), 0, entityCheckInterval);
     }
+
+    confirmationManager = new ConfirmationManager();
   }
 
   @Override

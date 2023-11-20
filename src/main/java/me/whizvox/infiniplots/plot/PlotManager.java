@@ -178,4 +178,15 @@ public class PlotManager {
     return null;
   }
 
+  public void removePlot(UUID ownerId, int ownerPlotId) {
+    Plot plot = getPlot(ownerId, ownerPlotId, false);
+    if (plot == null) {
+      return;
+    }
+    memberRepo.removePlot(plot.world(), plot.worldPlotId());
+    plotFlagsRepo.removePlot(plot.world(), plot.worldPlotId());
+    plotRepo.remove(plot.world(), plot.worldPlotId());
+    Objects.requireNonNull(getPlotWorld(plot.world())).remove(plot.worldPlotId());
+  }
+
 }

@@ -27,7 +27,7 @@ public class TeleportByWorldCommandHandler extends CommandHandler {
 
   @Override
   public String getUsageArguments() {
-    return "[<plot number> [<world>]]";
+    return "<plot number> [<world>]";
   }
 
   @Override

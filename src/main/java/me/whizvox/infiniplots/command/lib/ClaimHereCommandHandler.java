@@ -18,7 +18,8 @@ public class ClaimHereCommandHandler extends AbstractClaimCommandHandler {
       "- &b/infiniplots claimhere&r : Claims the plot you're standing in",
       "See also:",
       "- &b/infiniplots manual claim",
-      "- &b/infiniplots manual claimfor"
+      "- &b/infiniplots manual claimfor",
+      "- &b/infiniplots manual unclaim"
   );
 
   @Override

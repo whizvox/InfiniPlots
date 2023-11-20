@@ -1,6 +1,7 @@
 package me.whizvox.infiniplots.command;
 
 import me.whizvox.infiniplots.exception.InterruptCommandException;
+import me.whizvox.infiniplots.exception.MissingArgumentException;
 import me.whizvox.infiniplots.util.ChatUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -53,13 +54,19 @@ public class CommandDelegator implements CommandExecutor, TabCompleter {
       return true;
     }
     String subCommand = args[0];
+    CommandHandler handler = getHandler(subCommand);
+    if (handler == CommandHandler.EMPTY) {
+      sender.sendMessage(ChatUtils.altColorsf("&cRun &r/%s help&c to get command information", label));
+      return true;
+    }
     try {
-      CommandHandler handler = getHandler(subCommand);
       if (handler.hasPermission(sender)) {
         handler.execute(new CommandContext(sender, subCommand, Arrays.asList(args).subList(1, args.length)));
       } else {
         sender.sendMessage(ChatColor.RED + "Not allowed to do this");
       }
+    } catch (MissingArgumentException e) {
+      sender.sendMessage(ChatUtils.altColorsf("&cUsage: &b/infiniplots %s&r %s", subCommand, ChatUtils.buildUsage(handler.getUsageArguments())));
     } catch (InterruptCommandException e) {
       sender.sendMessage(ChatColor.RED + e.getMessage());
     }

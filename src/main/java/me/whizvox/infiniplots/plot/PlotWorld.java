@@ -82,9 +82,9 @@ public class PlotWorld {
     allFlags.put(plot.worldPlotId(), Collections.unmodifiableSet(plot.flags()));
   }
 
-  public void remove(Plot plot) {
-    allEditors.remove(plot.worldPlotId());
-    allFlags.remove(plot.worldPlotId());
+  public void remove(int wid) {
+    allEditors.remove(wid);
+    allFlags.remove(wid);
   }
 
 }

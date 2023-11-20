@@ -20,7 +20,8 @@ public class ClaimCommandHandler extends AbstractClaimCommandHandler {
       "- &b/infiniplots claim 57 bigplots&r : Claims the 57th plot in the &ebigplots&r world",
       "See also:",
       "- &b/infiniplots manual claimfor",
-      "- &b/infiniplots manual claimhere"
+      "- &b/infiniplots manual claimhere",
+      "- &b/infiniplots manual unclaim"
   );
 
   @Override

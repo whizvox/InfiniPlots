@@ -17,6 +17,14 @@ import java.util.stream.Collectors;
 
 public class ManualCommandHandler extends CommandHandler {
 
+  private static final List<String> MANUAL = List.of(
+      "This is a tool to view detailed information about a command. A list of these commands can be found by running &b/infiniplots help&r.",
+      "Examples:",
+      "- &b/infiniplots manual&r : List all commands with manuals",
+      "- &b/infiniplots manual claim&r : View the manual for the &eclaim&r command",
+      "- &b/infiniplots manual list&r : View the manual for the &elist&r command"
+  );
+
   private final CommandDelegator delegator;
 
   public ManualCommandHandler(CommandDelegator delegator) {
@@ -30,12 +38,7 @@ public class ManualCommandHandler extends CommandHandler {
 
   @Override
   public List<String> getManual() {
-    return List.of(
-        "This is a tool to view detailed information about a command. A list of these commands can be found by running &b/infiniplots help&r.",
-        "Examples:",
-        "    &b/infiniplots manual claim&r - View the manual for the &eclaim&r command",
-        "    &b/infiniplots manual list&r - View the manual for the &elist&r command"
-    );
+    return MANUAL;
   }
 
   @Override
@@ -56,34 +59,42 @@ public class ManualCommandHandler extends CommandHandler {
 
   @Override
   public void execute(CommandContext context) throws InterruptCommandException {
-    String label = ArgumentHelper.getInSet(context, 0, () -> {
-      throw new MissingArgumentException("Must include a command");
-    }, delegator.getAliases().keySet());
-    String command = delegator.getAliases().get(label);
-    CommandHandler handler = delegator.getHandler(label);
-    if (!handler.hasPermission(context.sender())) {
-      throw new InterruptCommandException("Unknown command: " + label);
-    }
-    List<String> manual = handler.getManual();
-    String usage = ChatUtils.buildUsage(handler.getUsageArguments());
-    List<String> aliases = delegator.getAliases().entrySet().stream()
-        .filter(entry -> entry.getValue().equals(command) && !entry.getKey().equals(command))
-        .map(Map.Entry::getKey)
-        .sorted()
-        .toList();
-    String aliasesStr;
-    if (aliases.isEmpty()) {
-      aliasesStr = "&o<none>";
+    if (context.args().isEmpty()) {
+      context.sendMessage("Manual topics: " + delegator.getHandlers().keySet().stream()
+          .sorted()
+          .map("&b%s&r"::formatted)
+          .collect(Collectors.joining(", "))
+      );
     } else {
-      aliasesStr = aliases.stream().map("&b%s&r"::formatted).collect(Collectors.joining(", "));
-    }
+      String label = ArgumentHelper.getInSet(context, 0, () -> {
+        throw new MissingArgumentException("Must include a command");
+      }, delegator.getAliases().keySet());
+      String command = delegator.getAliases().get(label);
+      CommandHandler handler = delegator.getHandler(label);
+      if (!handler.hasPermission(context.sender())) {
+        throw new InterruptCommandException("Unknown command: " + label);
+      }
+      List<String> manual = handler.getManual();
+      String usage = ChatUtils.buildUsage(handler.getUsageArguments());
+      List<String> aliases = delegator.getAliases().entrySet().stream()
+          .filter(entry -> entry.getValue().equals(command) && !entry.getKey().equals(command))
+          .map(Map.Entry::getKey)
+          .sorted()
+          .toList();
+      String aliasesStr;
+      if (aliases.isEmpty()) {
+        aliasesStr = "&o<none>";
+      } else {
+        aliasesStr = aliases.stream().map("&b%s&r"::formatted).collect(Collectors.joining(", "));
+      }
 
-    List<String> message = new ArrayList<>();
-    message.add("&7=== Manual for &b/infiniplots %s&r &7===".formatted(command));
-    message.add("- &7Usage: &b/infiniplots %s&r %s".formatted(command, usage));
-    message.add("- &7Aliases: &b" + aliasesStr);
-    message.addAll(manual);
-    context.sendMessage(message);
+      List<String> message = new ArrayList<>();
+      message.add("&7=== Manual for &b/infiniplots %s&r &7===".formatted(command));
+      message.add("- &7Usage: &b/infiniplots %s&r %s".formatted(command, usage));
+      message.add("- &7Aliases: &b" + aliasesStr);
+      message.addAll(manual);
+      context.sendMessage(message);
+    }
   }
 
 }

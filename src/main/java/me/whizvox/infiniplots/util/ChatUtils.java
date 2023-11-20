@@ -4,6 +4,8 @@ import me.whizvox.infiniplots.InfiniPlots;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 
+import java.util.List;
+
 public class ChatUtils {
 
   public static void notPermitted(CommandSender sender) {
@@ -50,6 +52,16 @@ public class ChatUtils {
       }
     }
     return sb.toString();
+  }
+
+  public static void listPages(List<String> entries, int page, int pageSize, List<String> message) {
+    int start = (page - 1) * pageSize;
+    int end = start + pageSize;
+    int totalPages = (int) Math.ceil((float) entries.size() / pageSize);
+    message.add("&7=== &6InfiniPlots Permissions&r (&b%d&r/&b%d&r) &7===".formatted(page, totalPages));
+    for (int i = start; i < end && i < entries.size(); i++) {
+      message.add("- " + entries.get(i));
+    }
   }
 
 }

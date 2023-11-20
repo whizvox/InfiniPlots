@@ -16,9 +16,15 @@ public class InfiniPlotsCommandDelegator extends CommandDelegator {
     register("claim", null, new ClaimCommandHandler());
     register("claimhere", List.of("here"), new ClaimHereCommandHandler());
     register("claimfor", List.of("for"), new ClaimForCommandHandler());
-    register("help", List.of("?"), new HelpCommandHandler(this));
+    register("help", List.of("?"), new HelpCommandHandler());
+    register("commands", List.of("cmds"), new ListCommandsCommandHandler(this));
     register("manual", List.of("man"), new ManualCommandHandler(this));
     register("genworld", null, new GenerateWorldCommandHandler());
+    register("permissions", List.of("perms"), new PermissionsCommand());
+    register("confirm", null, new ConfirmCommandHandler());
+    register("deny", null, new DenyCommandHandler());
+    register("unclaim", null, new UnclaimCommandHandler());
+    register("unclaimfor", List.of("unfor"), new UnclaimForCommandHandler());
   }
 
 }

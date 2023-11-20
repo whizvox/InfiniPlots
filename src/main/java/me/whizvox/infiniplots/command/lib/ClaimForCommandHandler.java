@@ -20,7 +20,8 @@ public class ClaimForCommandHandler extends AbstractClaimCommandHandler {
       "- &b/infiniplots claimfor Gamer72 32 bigplots&r : Claims the 32nd plot in the &ebigplots&r world for the target player",
       "See also:",
       "- &b/infiniplots manual claim",
-      "- &b/infiniplots manual claimhere"
+      "- &b/infiniplots manual claimhere",
+      "- &b/infiniplots manual unclaimfor"
   );
 
   @Override

@@ -37,4 +37,19 @@ public class SuggestionHelper {
         .toList();
   }
 
+  public static List<String> pages(String query, int totalPages) {
+    List<String> pages = new ArrayList<>();
+    for (int i = 1; i <= totalPages; i++) {
+      String page = String.valueOf(i);
+      if (page.startsWith(query)) {
+        pages.add(page);
+      }
+    }
+    return pages;
+  }
+
+  public static List<String> pages(String query, int totalItems, int pageSize) {
+    return pages(query, (int) Math.ceil((float) totalItems / pageSize));
+  }
+
 }
