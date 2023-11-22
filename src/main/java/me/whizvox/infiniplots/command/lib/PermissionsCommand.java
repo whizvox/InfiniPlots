@@ -52,6 +52,8 @@ public class PermissionsCommand extends CommandHandler {
       build("tpworld.<world>", "Allow teleporting to a specific world"),
       build("unclaim", "Allow a player to unclaim an owned plot (the &eunclaim&r command)"),
       build("unclaimfor", "Allow a player to unclaim another player's plot from them (the &eunclaimfor&e command)"),
+      build("flag.list", "Allow listing of all protection flags (the &eflag list&r command)"),
+      build("flag.world.modify", "Allow adding or removing of world protection flags (the &eflag add|remove&r command)"),
       build("worldinfo", "Allow viewing of plot world information (the &eworldinfo&r command)"),
       build("worldinfo.<world>", "Allow viewing the information of a specific plot world")
   );

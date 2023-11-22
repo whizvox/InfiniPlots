@@ -21,7 +21,6 @@ public class StandardProtectionFlags {
       VEHICLE_DESTROY = new ProtectionFlagProperties("vehicleDestroy", "Other players can damage or destroy vehicles"),
       CROP_TRAMPLING = new ProtectionFlagProperties("cropTrampling", "Other players can trample crops"),
       ITEM_FRAME_ROTATION = new ProtectionFlagProperties("itemFrameRotation", "Other players can rotate item frames"),
-      INANIMATE_ENTITY_DESTROY = new ProtectionFlagProperties("inanimateEntityDestroy", "Other players can destroy inanimate entities, such as paintings and armor stands", List.of(Map.entry("entity-painting-destroy", false), Map.entry("entity-item-frame-destroy", false))),
       FIREWORK_DAMAGE = new ProtectionFlagProperties("fireworkDamage", "Fireworks can damage mobs and entities"),
       STILL_WATER = new ProtectionFlagProperties("stillWater", "Water will not flow", "water-flow", true),
       STILL_LAVA = new ProtectionFlagProperties("stillLava", "Lava will not flow", "lava-flow", true),
@@ -49,7 +48,7 @@ public class StandardProtectionFlags {
   static {
     Map<String, ProtectionFlagProperties> temp = new HashMap<>();
     for (Field field : StandardProtectionFlags.class.getFields()) {
-      if (Modifier.isStatic(field.getModifiers()) && field.getDeclaringClass().isAssignableFrom(ProtectionFlagProperties.class)) {
+      if (Modifier.isStatic(field.getModifiers()) && ProtectionFlagProperties.class.isAssignableFrom(field.getType())) {
         try {
           ProtectionFlagProperties props = (ProtectionFlagProperties) field.get(null);
           temp.put(props.flag(), props);

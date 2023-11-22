@@ -49,6 +49,18 @@ public class PlotManager {
     return worldRepo;
   }
 
+  public PlotMemberRepository getMemberRepository() {
+    return memberRepo;
+  }
+
+  public PlotFlagsRepository getPlotFlagsRepository() {
+    return plotFlagsRepo;
+  }
+
+  public WorldFlagsRepository getWorldFlagsRepository() {
+    return worldFlagsRepo;
+  }
+
   public Stream<PlotWorld> plotWorlds() {
     return worlds.values().stream();
   }

@@ -49,7 +49,16 @@ public class WorldInfoCommandHandler extends CommandHandler {
     message.add("- &7UID&r: &b%s".formatted(plotWorld.world.getUID()));
     message.add("- &7Generator: &b%s".formatted(props.generator()));
     message.add("- &7Lockdown: &b%s".formatted(props.lockdown()));
-    message.add("- &7Flags: %s".formatted(props.flags().stream().map("&b%s&r"::formatted).collect(Collectors.joining(", "))));
+    String flagsStr;
+    if (props.flags().isEmpty()) {
+      flagsStr = "&o<none>";
+    } else {
+      flagsStr = props.flags().stream()
+          .sorted()
+          .map("&b%s&r"::formatted)
+          .collect(Collectors.joining(", "));
+    }
+    message.add("- &7Flags: %s".formatted(flagsStr));
     context.sendMessage(message);
   }
 
