@@ -14,6 +14,7 @@ import org.bukkit.command.CommandSender;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class InfoCommandHandler extends CommandHandler {
 
@@ -83,8 +84,8 @@ public class InfoCommandHandler extends CommandHandler {
       if (plot.flags().isEmpty()) {
         flagsString = "&b&o<none>&r";
       } else {
-        flagsString = plot.flags().stream()
-            .map(flag -> "&b%s&r".formatted(flag))
+        flagsString = StreamSupport.stream(plot.flags().spliterator(), false)
+            .map("&b%s&r"::formatted)
             .collect(Collectors.joining(", "));
       }
       messages.add("- &7Flags&r: %s".formatted(flagsString));

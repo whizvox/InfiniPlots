@@ -12,6 +12,7 @@ import org.bukkit.command.CommandSender;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class WorldInfoCommandHandler extends CommandHandler {
 
@@ -53,7 +54,7 @@ public class WorldInfoCommandHandler extends CommandHandler {
     if (props.flags().isEmpty()) {
       flagsStr = "&o<none>";
     } else {
-      flagsStr = props.flags().stream()
+      flagsStr = StreamSupport.stream(props.flags().spliterator(), false)
           .sorted()
           .map("&b%s&r"::formatted)
           .collect(Collectors.joining(", "));

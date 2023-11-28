@@ -1,6 +1,9 @@
 package me.whizvox.infiniplots.db;
 
 import me.whizvox.infiniplots.InfiniPlots;
+import me.whizvox.infiniplots.flag.Flag;
+import me.whizvox.infiniplots.flag.Flags;
+import me.whizvox.infiniplots.flag.FlagsManager;
 import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.util.Page;
@@ -139,8 +142,8 @@ public class PlotRepository extends Repository {
     if (plot.members() != null) {
       plot.members().forEach(memberId -> memberRepo.addMember(plot.world(), plot.worldPlotId(), memberId));
     }
-    if (plot.flags() != null) {
-      plot.flags().forEach(flag -> plotFlagsRepo.insert(plot.world(), plot.ownerPlotId(), flag));
+    if (plot.flags() != null && !plot.flags().isEmpty()) {
+      plot.flags().forEach(flag -> plotFlagsRepo.insert(plot.world(), plot.ownerPlotId(), flag.name(), flag.value()));
     }
   }
 
@@ -153,18 +156,18 @@ public class PlotRepository extends Repository {
     }
   }
 
-  public void updateFlags(PlotId plotId, @Nullable Iterable<String> flagsToAdd, @Nullable Iterable<String> flagsToRemove) {
+  public void updateFlags(PlotId plotId, @Nullable Iterable<Flag> flagsToAdd, @Nullable Iterable<String> flagsToRemove) {
     if (flagsToAdd != null) {
-      flagsToAdd.forEach(flag -> plotFlagsRepo.insert(plotId.world(), plotId.plot(), flag));
+      flagsToAdd.forEach(flag -> plotFlagsRepo.insert(plotId.world(), plotId.plot(), flag.name(), flag.value()));
     }
     if (flagsToRemove != null) {
       flagsToRemove.forEach(flag -> plotFlagsRepo.removePlotFlag(plotId.world(), plotId.plot(), flag));
     }
   }
 
-  public void updateFlags(PlotId plotId, Iterable<String> flags) {
+  public void updateFlags(PlotId plotId, Iterable<Flag> flags) {
     plotFlagsRepo.removePlot(plotId.world(), plotId.plot());
-    flags.forEach(flag -> plotFlagsRepo.insert(plotId.world(), plotId.plot(), flag));
+    flags.forEach(flag -> plotFlagsRepo.insert(plotId.world(), plotId.plot(), flag.name(), flag.value()));
   }
 
   public void remove(UUID worldId, int worldPlotId) {
@@ -188,13 +191,15 @@ public class PlotRepository extends Repository {
     UUID owner = UUID.fromString(rs.getString(3));
     int ownerPlotId = rs.getByte(4);
     Set<UUID> members;
-    Set<String> flags;
+    Flags flags;
     if (populate) {
       members = Set.copyOf(memberRepo.getMembers(world, worldPlotId));
-      flags = Set.copyOf(plotFlagsRepo.getFlags(world, worldPlotId));
+      List<Flag> flagsList = plotFlagsRepo.getFlags(world, worldPlotId);
+      flags = new FlagsManager();
+      ((FlagsManager) flags).set(flagsList);
     } else {
       members = Set.of();
-      flags = Set.of();
+      flags = Flags.EMPTY;
     }
     return new Plot(world, worldPlotId, owner, ownerPlotId, members, flags);
   }

@@ -1,5 +1,7 @@
 package me.whizvox.infiniplots.db;
 
+import me.whizvox.infiniplots.flag.Flags;
+import me.whizvox.infiniplots.flag.FlagsAdapter;
 import me.whizvox.infiniplots.plot.LockdownLevel;
 import me.whizvox.infiniplots.plot.PlotWorldProperties;
 import org.jetbrains.annotations.Nullable;
@@ -80,13 +82,13 @@ public class PlotWorldRepository extends Repository {
     if (lockdown == null) {
       lockdown = LockdownLevel.OFF;
     }
-    Set<String> flags;
+    Flags flags;
     if (populate) {
-      flags = new HashSet<>(worldFlagsRepo.getFlags(id));
+      flags = new FlagsAdapter(worldFlagsRepo.getFlags(id));
     } else {
-      flags = Set.of();
+      flags = Flags.EMPTY;
     }
-    return new PlotWorldProperties(id, worldName, generatorName, lockdown, Collections.unmodifiableSet(flags));
+    return new PlotWorldProperties(id, worldName, generatorName, lockdown, flags);
   }
 
 }

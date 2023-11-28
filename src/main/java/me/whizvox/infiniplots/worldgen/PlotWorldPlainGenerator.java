@@ -57,9 +57,12 @@ public class PlotWorldPlainGenerator extends PlotWorldGenerator {
     world.setGameRule(GameRule.DO_TRADER_SPAWNING, false);
     world.setGameRule(GameRule.DO_VINES_SPREAD, false);
     world.setGameRule(GameRule.DO_WARDEN_SPAWNING, false);
+    world.setGameRule(GameRule.DO_IMMEDIATE_RESPAWN, true);
     world.setGameRule(GameRule.FALL_DAMAGE, false);
     world.setGameRule(GameRule.MOB_GRIEFING, false);
     world.setGameRule(GameRule.SHOW_DEATH_MESSAGES, false);
+    world.setGameRule(GameRule.ANNOUNCE_ADVANCEMENTS, false);
+    world.setGameRule(GameRule.DO_LIMITED_CRAFTING, false);
     world.setTime(6000);
   }
 

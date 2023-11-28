@@ -1,5 +1,7 @@
 package me.whizvox.infiniplots.plot;
 
+import me.whizvox.infiniplots.flag.Flags;
+import me.whizvox.infiniplots.flag.FlagsManager;
 import me.whizvox.infiniplots.util.ChunkPos;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Location;
@@ -14,27 +16,33 @@ public class PlotWorld {
   public final PlotWorldGenerator generator;
   public final World world;
   public int nextPlotNumber;
-  public final Set<String> worldFlags;
+  public final FlagsManager worldFlags;
 
   private final Map<Integer, Set<UUID>> allEditors;
-  private final Map<Integer, Set<String>> allFlags;
+  private final Map<Integer, Flags> plotFlags;
 
   public PlotWorld(String name, PlotWorldGenerator generator, World world) {
     this.name = name;
     this.generator = generator;
     this.world = world;
     nextPlotNumber = 1;
-    worldFlags = new HashSet<>();
+    worldFlags = new FlagsManager();
+    worldFlags.setDefaults();
+
     allEditors = new HashMap<>();
-    allFlags = new HashMap<>();
+    plotFlags = new HashMap<>();
   }
 
   public Map<Integer, Set<UUID>> getAllEditors() {
     return Collections.unmodifiableMap(allEditors);
   }
 
-  public Map<Integer, Set<String>> getAllFlags() {
-    return Collections.unmodifiableMap(allFlags);
+  public Flags getWorldFlags() {
+    return worldFlags;
+  }
+
+  public Flags getPlotFlags(int plotNumber) {
+    return Objects.requireNonNullElse(plotFlags.get(plotNumber), Flags.EMPTY);
   }
 
   public boolean isClaimed(int plotNumber) {
@@ -52,10 +60,9 @@ public class PlotWorld {
     return n;
   }
 
-  public boolean canEdit(Player player, Location location) {
-    int plotNum = generator.getPlotNumber(new ChunkPos(location));
-    if (plotNum > 0) {
-      Set<UUID> plotEditors = allEditors.get(plotNum);
+  public boolean isPlotEditor(Player player, int plotNumber) {
+    if (plotNumber > 0) {
+      Set<UUID> plotEditors = allEditors.get(plotNumber);
       if (plotEditors == null) {
         return false;
       }
@@ -64,27 +71,23 @@ public class PlotWorld {
     return false;
   }
 
-  public boolean hasFlag(int plotNumber, String flag) {
-    if (worldFlags.contains(flag)) {
-      return true;
-    }
-    Set<String> plotFlags = allFlags.get(plotNumber);
-    if (plotFlags == null) {
-      return false;
-    }
-    return plotFlags.contains(flag);
+  public boolean isPlotEditor(Player player, Location location) {
+    int plotNum = generator.getPlotNumber(new ChunkPos(location));
+    return isPlotEditor(player, plotNum);
   }
 
   public void add(Plot plot) {
     Set<UUID> editors = new HashSet<>(plot.members());
     editors.add(plot.owner());
     allEditors.put(plot.worldPlotId(), Collections.unmodifiableSet(editors));
-    allFlags.put(plot.worldPlotId(), Collections.unmodifiableSet(plot.flags()));
+    if (!plot.flags().isEmpty()) {
+      plotFlags.put(plot.worldPlotId(), plot.flags());
+    }
   }
 
   public void remove(int wid) {
     allEditors.remove(wid);
-    allFlags.remove(wid);
+    plotFlags.remove(wid);
   }
 
 }

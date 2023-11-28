@@ -1,6 +1,7 @@
 package me.whizvox.infiniplots.plot;
 
-import java.util.Set;
+import me.whizvox.infiniplots.flag.Flags;
+
 import java.util.UUID;
 
 /**
@@ -15,5 +16,5 @@ public record PlotWorldProperties(UUID id,
                                   String name,
                                   String generator,
                                   LockdownLevel lockdown,
-                                  Set<String> flags) {
+                                  Flags flags) {
 }

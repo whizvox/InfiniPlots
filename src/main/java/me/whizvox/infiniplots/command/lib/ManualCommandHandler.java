@@ -89,7 +89,7 @@ public class ManualCommandHandler extends CommandHandler {
       }
 
       List<String> message = new ArrayList<>();
-      message.add("&7=== Manual for &b/infiniplots %s&r &7===".formatted(command));
+      message.add("&7===&r Manual for &b/infiniplots %s&r &7===".formatted(command));
       message.add("- &7Usage: &b/infiniplots %s&r %s".formatted(command, usage));
       message.add("- &7Aliases: &b" + aliasesStr);
       message.addAll(manual);

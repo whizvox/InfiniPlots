@@ -2,6 +2,6 @@ package me.whizvox.infiniplots.flag;
 
 import java.util.UUID;
 
-public record WorldProtectionFlag(UUID worldId, String flag) {
+public record PlotFlag(UUID worldId, int plotId, Flag flag) {
 
 }

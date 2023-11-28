@@ -2,6 +2,7 @@ package me.whizvox.infiniplots.plot;
 
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.db.*;
+import me.whizvox.infiniplots.flag.Flags;
 import me.whizvox.infiniplots.util.InfPlotUtils;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
@@ -121,7 +122,7 @@ public class PlotManager {
         // possible for this to fail when loading via the world folder
         if (props.id().equals(world.getUID())) {
           PlotWorld plotWorld = new PlotWorld(props.name(), generator, world);
-          plotWorld.worldFlags.addAll(props.flags());
+          plotWorld.worldFlags.set(props.flags());
           plotWorld.nextPlotNumber = plotRepo.getLastPlotNumber(props.id()) + 1;
           worlds.put(props.id(), plotWorld);
           if (props.name().equals(defaultWorldName)) {
@@ -160,9 +161,10 @@ public class PlotManager {
       throw new IllegalArgumentException("Attempted to use unregistered generator of type " + generator.getClass());
     }
     PlotWorld plotWorld = new PlotWorld(world.getName(), generator, world);
+    // TODO Implement default world flags via config file
+    plotWorld.worldFlags.setDefaults();
     if (writeToDatabase) {
-      // TODO Implement default world flags
-      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, LockdownLevel.OFF, Set.of()));
+      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, LockdownLevel.OFF, plotWorld.worldFlags));
     }
     worlds.put(worldId, plotWorld);
     return plotWorld;
@@ -182,7 +184,7 @@ public class PlotManager {
   public Plot addPlot(UUID worldId, int worldPlotNumber, UUID ownerId, int ownerPlotNumber) {
     PlotWorld world = worlds.get(worldId);
     if (world != null) {
-      Plot plot = new Plot(worldId, worldPlotNumber, ownerId, ownerPlotNumber, Set.of(), Set.of());
+      Plot plot = new Plot(worldId, worldPlotNumber, ownerId, ownerPlotNumber, Set.of(), Flags.EMPTY);
       plotRepo.insert(plot);
       world.add(plot);
       return plot;

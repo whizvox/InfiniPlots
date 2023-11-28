@@ -1,5 +1,7 @@
 package me.whizvox.infiniplots.plot;
 
+import me.whizvox.infiniplots.flag.Flags;
+
 import java.util.Set;
 import java.util.UUID;
 
@@ -14,6 +16,6 @@ import java.util.UUID;
  *                contain the unique ID of the owner. This set is not guaranteed to be filled out.
  * @param flags Protection flags for this plot
  */
-public record Plot(UUID world, int worldPlotId, UUID owner, int ownerPlotId, Set<UUID> members, Set<String> flags) {
+public record Plot(UUID world, int worldPlotId, UUID owner, int ownerPlotId, Set<UUID> members, Flags flags) {
 
 }

@@ -4,6 +4,7 @@ import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.exception.InvalidCommandArgumentException;
 import me.whizvox.infiniplots.exception.MissingArgumentException;
+import me.whizvox.infiniplots.flag.FlagValue;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChunkPos;
 import me.whizvox.infiniplots.util.InfPlotUtils;
@@ -28,6 +29,14 @@ public class ArgumentHelper {
 
   public static <T> T getArgument(CommandContext context, int index, Function<String, T> parser) {
     return getArgument(context, index, MissingArgumentException::fail, parser);
+  }
+
+  public static String getString(CommandContext context, int index, Supplier<String> defaultValue) {
+    return getArgument(context, index, defaultValue, s -> s);
+  }
+
+  public static String getString(CommandContext context, int index) {
+    return getString(context, index, MissingArgumentException::fail);
   }
 
   public static int getInt(CommandContext context, int index, Supplier<Integer> defaultValue, int min, int max) {
@@ -155,6 +164,19 @@ public class ArgumentHelper {
 
   public static String getInSet(CommandContext context, int index, Collection<String> possibleValues) {
     return getInSet(context, index, MissingArgumentException::fail, possibleValues);
+  }
+
+  public static FlagValue getFlagValue(CommandContext context, int index, Supplier<FlagValue> defaultValue) {
+    String valueStr = getInSet(context, index, () -> defaultValue.get().toString(), FlagValue.VALUES_MAP.keySet());
+    FlagValue value = FlagValue.VALUES_MAP.get(valueStr);
+    if (value == null) {
+      throw new InvalidCommandArgumentException("Invalid flag value: " + valueStr);
+    }
+    return value;
+  }
+
+  public static FlagValue getFlagValue(CommandContext context, int index) {
+    return getFlagValue(context, index, MissingArgumentException::fail);
   }
 
 }
