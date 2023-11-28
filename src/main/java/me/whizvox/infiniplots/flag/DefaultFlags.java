@@ -25,12 +25,16 @@ public class DefaultFlags {
       WATER_FLOW = new Flag("waterFlow", FlagValue.ALLOW),
       LAVA_FLOW = new Flag("lavaFlow", FlagValue.ALLOW),
       ICE_FORM = new Flag("iceForm", FlagValue.DENY),
+      SNOW_FALL = new Flag("snowFall", FlagValue.DENY),
+      CONCRETE_FORM = new Flag("blockForm", FlagValue.ALLOW),
       ICE_MELT = new Flag("iceMelt", FlagValue.DENY),
-      FROSTED_ICE_FORM = new Flag("frostedIceForm", FlagValue.EDITORS_ONLY),
+      // would be ideal to make this player-aware, but the event doesn't track that
+      FROSTED_ICE_FORM = new Flag("frostedIceForm", FlagValue.DENY),
       FROSTED_ICE_MELT = new Flag("frostedIceMelt", FlagValue.ALLOW),
       LEAF_DECAY = new Flag("leafDecay", FlagValue.ALLOW),
-      GRASS_GROWTH = new Flag("grassGrowth", FlagValue.ALLOW),
+      GRASS_SPREAD = new Flag("grassSpread", FlagValue.ALLOW),
       MYCELIUM_SPREAD = new Flag("myceliumSpread", FlagValue.ALLOW),
+      MUSHROOM_GROWTH = new Flag("mushroomGrowth", FlagValue.ALLOW),
       VINE_GROWTH = new Flag("vineGrowth", FlagValue.ALLOW),
       ROCK_GROWTH = new Flag("rockGrowth", FlagValue.ALLOW),
       SCULK_GROWTH = new Flag("sculkGrowth", FlagValue.ALLOW),
@@ -45,7 +49,8 @@ public class DefaultFlags {
       NETHER_PORTAL_CREATE = new Flag("netherPortalCreate", FlagValue.EDITORS_ONLY),
       END_PORTAL_CREATE = new Flag("endPortalCreate", FlagValue.DENY),
       NETHER_PORTAL_ENTER = new Flag("netherPortalEnter", FlagValue.DENY),
-      END_PORTAL_ENTER = new Flag("endPortalEnter", FlagValue.DENY);
+      END_PORTAL_ENTER = new Flag("endPortalEnter", FlagValue.DENY),
+      SHOOT_PROJECTILE = new Flag("shootProjectile", FlagValue.EDITORS_ONLY);
 
   public static final Map<String, Flag> ALL_FLAGS;
 
