@@ -2,7 +2,6 @@ package me.whizvox.infiniplots.event;
 
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.flag.DefaultFlags;
-import me.whizvox.infiniplots.flag.FlagValue;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChatUtils;
 import me.whizvox.infiniplots.util.ChunkPos;
@@ -20,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.*;
+import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
@@ -116,7 +116,7 @@ public class GriefPreventionEventsListener implements Listener {
       EntityType.MINECART_TNT
   );
 
-  private boolean checkPlayerAction(Cancellable event, PlotWorld plotWorld, Player player, Location location, String flag) {
+  public static boolean isPlayerActionAllowed(PlotWorld plotWorld, Player player, Location location, String flag) {
     if (!player.hasPermission("infiniplots.bypass." + flag)) {
       boolean allowed;
       int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(location));
@@ -128,13 +128,33 @@ public class GriefPreventionEventsListener implements Listener {
         allowed = plotWorld.worldFlags.getValue(flag).isAllowed(isEditor) ||
             plotWorld.getPlotFlags(plotNumber).getValue(flag).isAllowed(isEditor);
       }
-      if (!allowed) {
-        player.sendMessage(ChatUtils.altColors("&cNot allowed here"));
-        event.setCancelled(true);
-        return false;
-      }
+      return allowed;
     }
     return true;
+  }
+
+  public static boolean isNaturalActionAllowed(PlotWorld plotWorld, Location location, String flag) {
+    ChunkPos pos = new ChunkPos(location);
+    boolean inPlot = plotWorld.generator.inPlot(pos.x(), pos.z());
+    boolean worldFlagAllowed = plotWorld.worldFlags.getValue(flag).isAllowed(inPlot);
+    if (inPlot) {
+      if (worldFlagAllowed) {
+        return true;
+      } else {
+        int plotNumber = plotWorld.generator.getPlotNumber(pos);
+        return plotWorld.getPlotFlags(plotNumber).getValue(flag).isAllowed();
+      }
+    }
+    return worldFlagAllowed;
+  }
+
+  private boolean checkPlayerAction(Cancellable event, PlotWorld plotWorld, Player player, Location location, String flag) {
+    boolean allowed = isPlayerActionAllowed(plotWorld, player, location, flag);
+    if (!allowed) {
+      player.sendMessage(ChatUtils.altColors("&cNot allowed here"));
+      event.setCancelled(true);
+    }
+    return allowed;
   }
 
   private boolean checkPlayerAction(Cancellable event, Player player, Location location, String flag) {
@@ -146,17 +166,13 @@ public class GriefPreventionEventsListener implements Listener {
   }
 
   private boolean checkNaturalAction(Cancellable event, PlotWorld plotWorld, Location location, String flag) {
-    ChunkPos pos = new ChunkPos(location);
-    // do not allow the event if either of the following is true:
-    // 1. the location of the event is not in a plot
-    // 2. the world flag is not set to ALLOW if defined
-    if (!plotWorld.generator.inPlot(pos.x(), pos.z()) || plotWorld.worldFlags.getValue(flag) != FlagValue.ALLOW) {
+    boolean allowed = isNaturalActionAllowed(plotWorld, location, flag);
+    if (!allowed) {
       // TODO Add config option for this or make this smarter
       InfiniPlots.getInstance().getLogger().finer("Prohibited " + flag + " event at " + location);
       event.setCancelled(true);
-      return false;
     }
-    return true;
+    return allowed;
   }
 
   private boolean checkNaturalAction(Cancellable event, Location location, String flag) {
@@ -466,6 +482,11 @@ public class GriefPreventionEventsListener implements Listener {
     } else {
       checkNaturalAction(event, event.getEntity().getLocation(), DefaultFlags.ITEM_DROP.name());
     }
+  }
+
+  @EventHandler
+  public void onManipulateArmorStand(PlayerArmorStandManipulateEvent event) {
+    checkPlayerAction(event, event.getPlayer(), event.getRightClicked().getLocation(), DefaultFlags.INTERACT.name());
   }
 
 }
