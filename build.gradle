@@ -3,7 +3,7 @@ plugins {
 }
 
 group = 'me.whizvox'
-version = '0.0.9-dev'
+version = '0.0.9.1-dev'
 
 repositories {
   mavenCentral()

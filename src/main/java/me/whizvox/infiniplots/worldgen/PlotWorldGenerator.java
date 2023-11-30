@@ -26,11 +26,11 @@ public abstract class PlotWorldGenerator {
   }
 
   public boolean inPlotX(int chunkX) {
-    return (chunkX < 0 ? Math.abs(chunkX - regionWidth - 2) : chunkX) % regionWidth < plotWidth;
+    return (chunkX < 0 ? Math.abs(chunkX - (regionWidth - 2)) : chunkX) % regionWidth < plotWidth;
   }
 
   public boolean inPlotZ(int chunkZ) {
-    return (chunkZ < 0 ? Math.abs(chunkZ - regionDepth - 2) : chunkZ) % regionDepth < plotDepth;
+    return (chunkZ < 0 ? Math.abs(chunkZ - (regionDepth - 2)) : chunkZ) % regionDepth < plotDepth;
   }
 
   public boolean inPlot(int chunkX, int chunkZ) {
