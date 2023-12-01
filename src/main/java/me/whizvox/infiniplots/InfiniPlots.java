@@ -2,6 +2,7 @@ package me.whizvox.infiniplots;
 
 import me.whizvox.infiniplots.command.CommandDelegator;
 import me.whizvox.infiniplots.command.lib.InfiniPlotsCommandDelegator;
+import me.whizvox.infiniplots.compat.worldguard.WorldGuardWrapper;
 import me.whizvox.infiniplots.event.CheckEntityPlotBoundsTask;
 import me.whizvox.infiniplots.event.GriefPreventionEventsListener;
 import me.whizvox.infiniplots.plot.PlotManager;
@@ -30,7 +31,8 @@ public final class InfiniPlots extends JavaPlugin {
       CFG_DEFAULT_MAX_PLOTS = "defaultMaxPlots",
       CFG_PLOT_OWNER_TIERS = "plotOwnerTiers",
       CFG_DEFAULT_PLOT_WORLD_GENERATOR = "defaultPlotWorldGenerator",
-      CFG_CHECK_PLOT_ENTITY_BOUNDS = "checkPlotEntityBounds";
+      CFG_CHECK_PLOT_ENTITY_BOUNDS = "checkPlotEntityBounds"/*,
+      CFG_USE_WORLDGUARD = "useWorldGuard"*/;
 
   private static InfiniPlots instance = null;
 
@@ -75,7 +77,7 @@ public final class InfiniPlots extends JavaPlugin {
     getConfig().addDefault(CFG_PLOT_OWNER_TIERS, PlotOwnerTiers.DEFAULT);
     getConfig().addDefault(CFG_DEFAULT_PLOT_WORLD_GENERATOR, "plains2");
     getConfig().addDefault(CFG_CHECK_PLOT_ENTITY_BOUNDS, 4);
-    //getConfig().addDefault("useWorldGuardIfLoaded", true);
+    //getConfig().addDefault(CFG_USE_WORLDGUARD, false);
 
     getConfig().options().copyDefaults(true);
 
@@ -89,7 +91,7 @@ public final class InfiniPlots extends JavaPlugin {
         "For example: a value of 2 means this is checked every 2 ticks, or 10 times per second",
         "If a value of 0 is passed, then this check is disabled entirely"
     ));
-    /*getConfig().setComments("useWorldGuardIfLoaded", List.of(
+    /*getConfig().setComments(CFG_USE_WORLDGUARD, List.of(
         "Use WorldGuard regions to handle plot world interactions",
         "If false or if WorldGuard is not loaded, InfiniPlots will use its own event handlers"
     ));*/
@@ -117,7 +119,9 @@ public final class InfiniPlots extends JavaPlugin {
     command.setExecutor(delegator);
     command.setTabCompleter(delegator);
 
-    getServer().getPluginManager().registerEvents(new GriefPreventionEventsListener(), this);
+    if (!WorldGuardWrapper.init()) {
+      getServer().getPluginManager().registerEvents(new GriefPreventionEventsListener(), this);
+    }
     int entityCheckInterval = getConfig().getInt(CFG_CHECK_PLOT_ENTITY_BOUNDS);
     if (entityCheckInterval < 1) {
       getLogger().info("Entity plot bounds checking has been disabled");

@@ -38,7 +38,7 @@ public class ClaimHereCommandHandler extends AbstractClaimCommandHandler {
     if (plotNumber < 1) {
       throw new InterruptCommandException("Not in a plot");
     }
-    return new ClaimCommandArguments(player, plotWorld, plotNumber);
+    return new ClaimCommandArguments(player, plotWorld, plotNumber, false);
   }
 
 }

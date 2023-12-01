@@ -50,7 +50,7 @@ public class ClaimCommandHandler extends AbstractClaimCommandHandler {
       plotWorld.nextPlotNumber = plotWorld.calculateNextUnclaimedPlot();
       return plotWorld.nextPlotNumber;
     });
-    return new ClaimCommandArguments(player, plotWorld, plotNumber);
+    return new ClaimCommandArguments(player, plotWorld, plotNumber, false);
   }
 
 }

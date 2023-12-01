@@ -6,6 +6,7 @@ import me.whizvox.infiniplots.command.CommandHandler;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.plot.PlotWorld;
+import me.whizvox.infiniplots.util.ChatUtils;
 import me.whizvox.infiniplots.util.PermissionUtils;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -35,7 +36,7 @@ public abstract class AbstractClaimCommandHandler extends CommandHandler {
     PlotWorld plotWorld = args.plotWorld;
     int plotNumber = args.plotNumber;
     int maxPlots;
-    if (player.hasPermission(PERMISSION_INF)) {
+    if (args.bypassPermissions || player.hasPermission(PERMISSION_INF)) {
       maxPlots = Integer.MAX_VALUE;
     } else {
       maxPlots = 0;
@@ -64,10 +65,15 @@ public abstract class AbstractClaimCommandHandler extends CommandHandler {
     }
     InfiniPlots.getInstance().getPlotManager().addPlot(plotWorld.world.getUID(), plotNumber, player.getUniqueId(), ownerPlotId);
     player.teleport(location, PlayerTeleportEvent.TeleportCause.COMMAND);
-    context.sendMessage("Claimed plot #&b%s&r in &e%s", plotNumber, plotWorld.name);
+    if (player == context.sender()) {
+      context.sendMessage("Claimed plot #&b%s&r in &e%s", plotNumber, plotWorld.name);
+    } else {
+      context.sendMessage("Claimed plot #&b%s&r in &e%s&r for &a%s", plotNumber, plotWorld.name, player.getName());
+      player.sendMessage(ChatUtils.altColorsf("Plot #&b%s&r in &e%s%r has been claimed on your behalf from &a%s", plotNumber, plotWorld.name, context.sender().getName()));
+    }
   }
 
-  public record ClaimCommandArguments(Player player, PlotWorld plotWorld, int plotNumber) {
+  public record ClaimCommandArguments(Player player, PlotWorld plotWorld, int plotNumber, boolean bypassPermissions) {
   }
 
 }

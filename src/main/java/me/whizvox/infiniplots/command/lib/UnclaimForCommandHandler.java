@@ -6,8 +6,10 @@ import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.exception.MissingArgumentException;
 import me.whizvox.infiniplots.plot.Plot;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import java.util.List;
 
@@ -34,6 +36,28 @@ public class UnclaimForCommandHandler extends AbstractUnclaimCommandHandler {
   }
 
   @Override
+  public List<String> listSuggestions(CommandContext context) {
+    if (context.args().size() == 1) {
+      String query = context.args().get(0);
+      return Bukkit.getOnlinePlayers().stream()
+          .filter(player -> player != context.sender() && player.getName().startsWith(query))
+          .map(Player::getName)
+          .sorted()
+          .toList();
+    } else if (context.args().size() == 2) {
+      Player player = Bukkit.getPlayer(context.args().get(0));
+      if (player != null) {
+        String query = context.args().get(1);
+        return InfiniPlots.getInstance().getPlotManager().getPlots(player.getUniqueId(), false).stream()
+            .map(plot -> String.valueOf(plot.ownerPlotId()))
+            .filter(oid -> oid.startsWith(query))
+            .toList();
+      }
+    }
+    return super.listSuggestions(context);
+  }
+
+  @Override
   public boolean hasPermission(CommandSender sender) {
     return sender.hasPermission("infiniplots.unclaimfor");
   }
@@ -41,6 +65,9 @@ public class UnclaimForCommandHandler extends AbstractUnclaimCommandHandler {
   @Override
   protected Arguments getArguments(CommandContext context) throws InterruptCommandException {
     OfflinePlayer player = ArgumentHelper.getOfflinePlayer(context, 0);
+    if (player == context.sender()) {
+      throw new InterruptCommandException("Cannot select self");
+    }
     int oid;
     if (context.args().size() == 1) {
       List<Plot> plots = InfiniPlots.getInstance().getPlotManager().getPlots(player.getUniqueId(), false);
