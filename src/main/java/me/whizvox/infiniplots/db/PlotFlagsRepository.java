@@ -3,6 +3,7 @@ package me.whizvox.infiniplots.db;
 import me.whizvox.infiniplots.flag.Flag;
 import me.whizvox.infiniplots.flag.FlagValue;
 import me.whizvox.infiniplots.flag.PlotFlag;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -24,7 +25,9 @@ public class PlotFlagsRepository extends Repository {
       ")",
       SELECT_ALL = "SELECT world,plot,flag,value FROM plot_flags",
       SELECT_BY_PLOT = "SELECT world,plot,flag,value FROM plot_flags WHERE world=? AND plot=?",
+      SELECT_FLAG = "SELECT value FROM plot_flags WHERE world=? AND plot=? AND flag=?",
       INSERT = "INSERT INTO plot_flags (world,plot,flag,value) VALUES (?,?,?,?)",
+      UPDATE = "UPDATE plot_flags SET value=? WHERE world=? AND plot=? AND flag=?",
       DELETE_ONE = "DELETE FROM plot_flags WHERE world=? AND plot=? AND flag=?",
       DELETE_BY_PLOT = "DELETE FROM plot_flags WHERE world=? AND plot=?",
       DELETE_BY_WORLD = "DELETE FROM plot_flags WHERE world=?";
@@ -57,8 +60,30 @@ public class PlotFlagsRepository extends Repository {
     });
   }
 
+  @Nullable
+  public FlagValue getFlagValue(UUID worldId, int plotId, String flag) {
+    return executeQuery(SELECT_FLAG, List.of(worldId, plotId, flag), rs -> {
+      if (rs.next()) {
+        return FlagValue.from(rs.getByte(1));
+      }
+      return null;
+    });
+  }
+
   public void insert(UUID worldId, int plotId, String flag, FlagValue value) {
     executeUpdate(INSERT, List.of(worldId, plotId, flag, value));
+  }
+
+  public void update(UUID worldId, int plotId, String flag, FlagValue value) {
+    executeUpdate(UPDATE, List.of(value, worldId, plotId, flag));
+  }
+
+  public void insertOrUpdate(UUID worldId, int plotId, String flag, FlagValue value) {
+    if (getFlagValue(worldId, plotId, flag) == null) {
+      insert(worldId, plotId, flag, value);
+    } else {
+      update(worldId, plotId, flag, value);
+    }
   }
 
   public void removePlotFlag(UUID worldId, int plotId, String flag) {

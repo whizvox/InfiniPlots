@@ -5,13 +5,16 @@ import me.whizvox.infiniplots.util.ChatUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import java.util.Collections;
 import java.util.List;
 
 public record CommandContext(CommandSender sender, String label, List<String> args) {
 
   public boolean isValid() {
     return !label.isEmpty();
+  }
+
+  public String arg(int index) {
+    return args.get(index);
   }
 
   public Player getPlayerOrException() {

@@ -1,12 +1,12 @@
 package me.whizvox.infiniplots.plot;
 
-import me.whizvox.infiniplots.flag.Flags;
-import me.whizvox.infiniplots.flag.FlagsManager;
+import me.whizvox.infiniplots.flag.*;
 import me.whizvox.infiniplots.util.ChunkPos;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -88,6 +88,26 @@ public class PlotWorld {
   public void remove(int wid) {
     allEditors.remove(wid);
     plotFlags.remove(wid);
+  }
+
+  public void setPlotFlag(int plotNumber, String flag, @Nullable FlagValue value) {
+    Flags flags = plotFlags.get(plotNumber);
+    if (flags == null) {
+      flags = new FlagsManager();
+      if (value != null) {
+        ((FlagsManager) flags).set(new Flag(flag, value));
+      }
+    } else {
+      FlagsManager temp = new FlagsManager();
+      temp.set(flags);
+      if (value == null) {
+        temp.clear(flag);
+      } else {
+        temp.set(new Flag(flag, value));
+      }
+      flags = new FlagsAdapter(temp);
+    }
+    plotFlags.put(plotNumber, flags);
   }
 
 }

@@ -5,11 +5,13 @@ import me.whizvox.infiniplots.command.ArgumentHelper;
 import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.command.CommandHandler;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
+import me.whizvox.infiniplots.flag.Flag;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.plot.PlotWorldProperties;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -55,8 +57,8 @@ public class WorldInfoCommandHandler extends CommandHandler {
       flagsStr = "&o<none>";
     } else {
       flagsStr = StreamSupport.stream(props.flags().spliterator(), false)
-          .sorted()
-          .map("&b%s&r"::formatted)
+          .sorted(Comparator.comparing(Flag::name))
+          .map(flag -> "&b%s&r=&e%s&r".formatted(flag.name(), flag.value().friendlyName()))
           .collect(Collectors.joining(", "));
     }
     message.add("- &7Flags: %s".formatted(flagsStr));

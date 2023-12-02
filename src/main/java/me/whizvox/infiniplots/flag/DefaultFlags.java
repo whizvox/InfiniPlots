@@ -26,7 +26,7 @@ public class DefaultFlags {
       LAVA_FLOW = new Flag("lavaFlow", FlagValue.ALLOW),
       ICE_FORM = new Flag("iceForm", FlagValue.DENY),
       SNOW_FALL = new Flag("snowFall", FlagValue.DENY),
-      CONCRETE_FORM = new Flag("blockForm", FlagValue.ALLOW),
+      CONCRETE_FORM = new Flag("concreteForm", FlagValue.ALLOW),
       ICE_MELT = new Flag("iceMelt", FlagValue.DENY),
       // would be ideal to make this player-aware, but the event doesn't track that
       FROSTED_ICE_FORM = new Flag("frostedIceForm", FlagValue.DENY),

@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class WorldFlagsCommandHandler extends CommandHandler {
+public class WorldFlagCommandHandler extends CommandHandler {
 
   private static final List<String> MANUAL = List.of(
       "Manage protection flags for a world, allowing for the listing of all possible flags, setting flags for " +

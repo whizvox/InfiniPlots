@@ -2,6 +2,7 @@ package me.whizvox.infiniplots.event;
 
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.flag.DefaultFlags;
+import me.whizvox.infiniplots.flag.Flags;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChatUtils;
 import me.whizvox.infiniplots.util.ChunkPos;
@@ -125,8 +126,13 @@ public class GriefPreventionEventsListener implements Listener {
         allowed = false;
       } else {
         boolean isEditor = plotWorld.isPlotEditor(player, plotNumber);
-        allowed = plotWorld.worldFlags.getValue(flag).isAllowed(isEditor) ||
-            plotWorld.getPlotFlags(plotNumber).getValue(flag).isAllowed(isEditor);
+        Flags flags = plotWorld.getPlotFlags(plotNumber);
+        // override potential world flag protection
+        if (flags.contains(flag)) {
+          allowed = flags.getValue(flag).isAllowed(isEditor);
+        } else {
+          allowed = plotWorld.worldFlags.getValue(flag).isAllowed(isEditor);
+        }
       }
       return allowed;
     }
@@ -136,13 +142,14 @@ public class GriefPreventionEventsListener implements Listener {
   public static boolean isNaturalActionAllowed(PlotWorld plotWorld, Location location, String flag) {
     ChunkPos pos = new ChunkPos(location);
     boolean inPlot = plotWorld.generator.inPlot(pos.x(), pos.z());
-    boolean worldFlagAllowed = plotWorld.worldFlags.getValue(flag).isAllowed(inPlot);
+    boolean worldFlagAllowed = plotWorld.worldFlags.getValue(flag).isAllowed();
     if (inPlot) {
-      if (worldFlagAllowed) {
-        return true;
+      int plotNumber = plotWorld.generator.getPlotNumber(pos);
+      Flags flags = plotWorld.getPlotFlags(plotNumber);
+      if (flags.contains(flag)) {
+        return flags.getValue(flag).isAllowed();
       } else {
-        int plotNumber = plotWorld.generator.getPlotNumber(pos);
-        return plotWorld.getPlotFlags(plotNumber).getValue(flag).isAllowed();
+        return worldFlagAllowed;
       }
     }
     return worldFlagAllowed;
@@ -291,12 +298,24 @@ public class GriefPreventionEventsListener implements Listener {
 
   @EventHandler
   public void onPortalCreate(PortalCreateEvent event) {
-    if (event.getEntity() instanceof Player player && event.getReason() == PortalCreateEvent.CreateReason.FIRE) {
+    if (event.getReason() == PortalCreateEvent.CreateReason.FIRE) {
+      Player player;
+      if (event.getEntity() instanceof Player player1) {
+        player = player1;
+      } else {
+        player = null;
+      }
       PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(event.getWorld().getUID());
       if (plotWorld != null) {
         for (BlockState block : event.getBlocks()) {
-          if (!checkPlayerAction(event, plotWorld, player, block.getLocation(), DefaultFlags.NETHER_PORTAL_CREATE.name())) {
-            return;
+          if (player == null) {
+            if (!checkNaturalAction(event, plotWorld, block.getLocation(), DefaultFlags.NETHER_PORTAL_CREATE.name())) {
+              return;
+            }
+          } else {
+            if (!checkPlayerAction(event, plotWorld, player, block.getLocation(), DefaultFlags.NETHER_PORTAL_CREATE.name())) {
+              return;
+            }
           }
         }
       }
