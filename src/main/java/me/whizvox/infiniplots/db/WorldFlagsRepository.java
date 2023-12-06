@@ -24,7 +24,9 @@ public class WorldFlagsRepository extends Repository {
       ")",
       SELECT_ALL = "SELECT world,flag,value FROM world_flags",
       SELECT_BY_WORLD = "SELECT world,flag,value FROM world_flags WHERE world=?",
+      SELECT_FLAG = "SELECT value FROM world_flags WHERE world=? AND flag=?",
       INSERT = "INSERT INTO world_flags (world,flag,value) VALUES (?,?,?)",
+      UPDATE = "UPDATE world_flags SET value=? WHERE world=? AND flag=?",
       DELETE_FLAG = "DELETE FROM world_flags WHERE world=? AND flag=?",
       DELETE_WORLD = "DELETE FROM world_flags WHERE world=?";
 
@@ -56,6 +58,15 @@ public class WorldFlagsRepository extends Repository {
     });
   }
 
+  public FlagValue getValue(UUID worldId, String flag) {
+    return executeQuery(SELECT_FLAG, List.of(worldId, flag), rs -> {
+      if (rs.next()) {
+        return FlagValue.from(rs.getByte(1));
+      }
+      return null;
+    });
+  }
+
   public void insertAll(UUID worldId, Iterable<Flag> flags) {
     try (PreparedStatement stmt = conn.prepareStatement(INSERT)) {
       for (Flag flag : flags) {
@@ -72,6 +83,18 @@ public class WorldFlagsRepository extends Repository {
 
   public void insert(UUID worldId, String flag, FlagValue value) {
     executeUpdate(INSERT, List.of(worldId, flag, value));
+  }
+
+  public void update(UUID worldId, String flag, FlagValue value) {
+    executeUpdate(UPDATE, List.of(value, worldId, flag));
+  }
+
+  public void insertOrUpdate(UUID worldId, String flag, FlagValue value) {
+    if (getValue(worldId, flag) == null) {
+      insert(worldId, flag, value);
+    } else {
+      update(worldId, flag, value);
+    }
   }
 
   public void remove(UUID worldId, String flag) {

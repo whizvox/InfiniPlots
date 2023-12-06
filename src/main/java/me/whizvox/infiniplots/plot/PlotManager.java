@@ -7,6 +7,7 @@ import me.whizvox.infiniplots.util.InfPlotUtils;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -95,6 +96,22 @@ public class PlotManager {
     return defaultWorld;
   }
 
+  /**
+   * Attempt to get either the plot world that the player is standing in or the default plot world if the player is not
+   * in a plot world.
+   * @param player The player to check
+   * @return The plot world the player is standing in, or the default. Returns <code>null</code> if the player is not
+   * standing in a plot world and the default plot world is not configured.
+   */
+  @Nullable
+  public PlotWorld getPlotWorld(Player player) {
+    PlotWorld plotWorld = worlds.get(player.getWorld().getUID());
+    if (plotWorld == null) {
+      return defaultWorld;
+    }
+    return plotWorld;
+  }
+
   public void sync() throws SQLException {
     worlds.clear();
 
@@ -162,9 +179,8 @@ public class PlotManager {
     }
     PlotWorld plotWorld = new PlotWorld(world.getName(), generator, world);
     // TODO Implement default world flags via config file
-    plotWorld.worldFlags.setDefaults();
     if (writeToDatabase) {
-      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, LockdownLevel.OFF, plotWorld.worldFlags));
+      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, LockdownLevel.OFF, Flags.EMPTY));
     }
     worlds.put(worldId, plotWorld);
     return plotWorld;

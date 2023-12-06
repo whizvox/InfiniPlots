@@ -54,7 +54,7 @@ public class WorldInfoCommandHandler extends CommandHandler {
     message.add("- &7Lockdown: &b%s".formatted(props.lockdown()));
     String flagsStr;
     if (props.flags().isEmpty()) {
-      flagsStr = "&o<none>";
+      flagsStr = "&b&o<none>";
     } else {
       flagsStr = StreamSupport.stream(props.flags().spliterator(), false)
           .sorted(Comparator.comparing(Flag::name))

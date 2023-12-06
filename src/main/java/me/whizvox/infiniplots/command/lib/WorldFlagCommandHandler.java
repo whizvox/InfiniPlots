@@ -4,42 +4,40 @@ import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.command.ArgumentHelper;
 import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.command.CommandHandler;
+import me.whizvox.infiniplots.command.SuggestionHelper;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.exception.InvalidCommandArgumentException;
-import me.whizvox.infiniplots.exception.MissingArgumentException;
 import me.whizvox.infiniplots.exception.NotEnoughPermissionException;
-import me.whizvox.infiniplots.flag.DefaultFlags;
 import me.whizvox.infiniplots.flag.Flag;
 import me.whizvox.infiniplots.flag.FlagValue;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class WorldFlagCommandHandler extends CommandHandler {
 
   private static final List<String> MANUAL = List.of(
-      "Manage protection flags for a world, allowing for the listing of all possible flags, setting flags for " +
-      "specific worlds, and clearing flags from worlds. If a flag is not set for a world, the default value will be " +
-      "used if defined via &edefault_flags.json&r. If not defined there, the feature will be denied.",
+      "Manage protection flags for a world, allowing the setting flags for specific worlds and clearing flags from " +
+      "worlds. If a flag is not set for a world, the default value will be used if defined via " +
+      "&edefault_flags.json&r. If not defined there, the feature will be denied.",
       "If you want to see all of the flags currently set for a world, run &b/infiniplots worldinfo&r.",
       "Examples:",
-      "- &b/infiniplots flag list&r : List all possible protection flags",
       "- &b/infiniplots flag set interact allow&r : Set the &einteract&r flag to your world or the default world",
       "- &b/infiniplots flag set interact allow bigplots&r : Add the &einteract&r flag to the &ebigplots&r world",
       "- &b/infiniplots flag clear ride&r : Clear the &eride&r flag from your world or the default world",
       "- &b/infiniplots flag clear ride bigplots&r : Clear the &eride&r flag from the &ebigplots&r world",
       "See also:",
-      "- &b/infiniplots manual worldinfo"
+      "- &b/infiniplots manual worldinfo",
+      "- &b/infiniplots flag list"
   );
 
-  private static final List<String> ACTIONS = List.of("list", "set", "clear");
+  private static final List<String> ACTIONS = List.of("get", "set", "clear");
 
   @Override
   public String getUsageArguments() {
-    return "list | set <flag> <value> [<world>] | clear <flag> [<world>]";
+    return "get <flag> [<world>] | set <flag> <value> [<world>] | clear <flag> [<world>]";
   }
 
   @Override
@@ -50,22 +48,25 @@ public class WorldFlagCommandHandler extends CommandHandler {
   @Override
   public List<String> listSuggestions(CommandContext context) {
     if (context.args().size() == 1) {
-      return ACTIONS.stream().filter(s -> s.startsWith(context.args().get(0))).toList();
+      return SuggestionHelper.fromCollection(ACTIONS, context.arg(0));
     } else if (context.args().size() == 2) {
-      switch (context.args().get(0)) {
-        case "set", "clear" -> {
-          return DefaultFlags.ALL_FLAGS.keySet().stream()
-              .filter(flag -> flag.startsWith(context.args().get(1)))
-              .sorted()
-              .toList();
+      switch (context.arg(0)) {
+        case "get", "set", "clear" -> {
+          return SuggestionHelper.flags(context.arg(1));
         }
       }
     } else if (context.args().size() == 3) {
-      if (context.args().get(0).equals("set")) {
-        return FlagValue.VALUES_MAP.keySet().stream()
-            .filter(value -> value.startsWith(context.args().get(2)))
-            .sorted()
-            .toList();
+      switch (context.arg(0)) {
+        case "get", "clear" -> {
+          return SuggestionHelper.plotWorlds(context.arg(2));
+        }
+        case "set" -> {
+          return SuggestionHelper.flagValues(context.arg(2));
+        }
+      }
+    } else if (context.args().size() == 4) {
+      if (context.arg(0).equals("set")) {
+        return SuggestionHelper.plotWorlds(context.arg(3));
       }
     }
     return super.listSuggestions(context);
@@ -78,43 +79,39 @@ public class WorldFlagCommandHandler extends CommandHandler {
 
   @Override
   public void execute(CommandContext context) throws InterruptCommandException {
-    String action = ArgumentHelper.getInSet(context, 0, MissingArgumentException::fail, ACTIONS);
+    String action = ArgumentHelper.getInSet(context, 0, ACTIONS);
     switch (action) {
-      case "list" -> {
-        NotEnoughPermissionException.check(context.sender(), "infiniplots.flag.list");
-        List<String> message = new ArrayList<>();
-        message.add("&7=== &6All Protection Flags &7===");
-        message.add(DefaultFlags.ALL_FLAGS.keySet().stream()
-            .sorted()
-            .map("&b%s&r"::formatted)
-            .collect(Collectors.joining(", "))
-        );
-        context.sendMessage(message);
+      case "get" -> {
+        NotEnoughPermissionException.check(context.sender(), "infiniplots.worldflag.get");
+        PlotWorld plotWorld;
+        if (context.sender() instanceof Player player) {
+          plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(player);
+        } else {
+          plotWorld = InfiniPlots.getInstance().getPlotManager().getDefaultWorld();
+        }
+        if (plotWorld == null) {
+          throw new InterruptCommandException("Default world is not set up");
+        }
+        String flag = ArgumentHelper.getString(context, 1);
+        boolean isSet = plotWorld.worldFlags.contains(flag);
+        context.sendMessage("World Flag &b%s&r: &e%s%s", flag, plotWorld.worldFlags.getValue(flag).friendlyName(), isSet ? "" : " &a(default)");
       }
       case "set" -> {
-        NotEnoughPermissionException.check(context.sender(), "infiniplots.flag.world.modify");
-        String flag = ArgumentHelper.getInSet(context, 1, DefaultFlags.ALL_FLAGS.keySet());
+        String flag = ArgumentHelper.getString(context, 1);
+        NotEnoughPermissionException.check(context.sender(), "infiniplots.worldflag.modify." + flag);
         FlagValue value = ArgumentHelper.getFlagValue(context, 2);
         PlotWorld plotWorld = ArgumentHelper.getPlotWorld(context, 3);
-        if (!plotWorld.worldFlags.contains(flag)) {
-          plotWorld.worldFlags.set(new Flag(flag, value));
-          InfiniPlots.getInstance().getPlotManager().getWorldFlagsRepository().insert(plotWorld.world.getUID(), flag, value);
-          context.sendMessage("Successfully set the &b%s&r flag to &e%s", flag, plotWorld.name);
-        } else {
-          context.sendMessage("&cThe &b%s&c flag already exists in &e%s&c", flag, plotWorld.name);
-        }
+        plotWorld.worldFlags.set(new Flag(flag, value));
+        InfiniPlots.getInstance().getPlotManager().getWorldFlagsRepository().insertOrUpdate(plotWorld.world.getUID(), flag, value);
+        context.sendMessage("Successfully set the &b%s&r flag for &e%s", flag, plotWorld.name);
       }
       case "clear" -> {
-        NotEnoughPermissionException.check(context.sender(), "infiniplots.flag.world.modify");
-        String flag = ArgumentHelper.getInSet(context, 1, DefaultFlags.ALL_FLAGS.keySet());
+        String flag = ArgumentHelper.getString(context, 1);
+        NotEnoughPermissionException.check(context.sender(), "infiniplots.worldflag.modify." + flag);
         PlotWorld plotWorld = ArgumentHelper.getPlotWorld(context, 2);
-        if (plotWorld.worldFlags.contains(flag)) {
-          plotWorld.worldFlags.clear(flag);
-          InfiniPlots.getInstance().getPlotManager().getWorldFlagsRepository().remove(plotWorld.world.getUID(), flag);
-          context.sendMessage("Successfully cleared the &b%s&r flag from &e%s", flag, plotWorld.name);
-        } else {
-          context.sendMessage("&cWorld &e%s&c does not contain the &b%s&c flag", plotWorld.name, flag);
-        }
+        plotWorld.worldFlags.clear(flag);
+        InfiniPlots.getInstance().getPlotManager().getWorldFlagsRepository().remove(plotWorld.world.getUID(), flag);
+        context.sendMessage("Successfully cleared the &b%s&r flag from &e%s", flag, plotWorld.name);
       }
       default -> throw new InvalidCommandArgumentException("Unknown action: " + action);
     }

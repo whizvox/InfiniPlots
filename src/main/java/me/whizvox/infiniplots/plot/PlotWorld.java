@@ -27,7 +27,6 @@ public class PlotWorld {
     this.world = world;
     nextPlotNumber = 1;
     worldFlags = new FlagsManager();
-    worldFlags.setDefaults();
 
     allEditors = new HashMap<>();
     plotFlags = new HashMap<>();

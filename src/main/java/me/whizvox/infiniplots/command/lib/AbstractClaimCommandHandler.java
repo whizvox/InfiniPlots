@@ -64,12 +64,14 @@ public abstract class AbstractClaimCommandHandler extends CommandHandler {
       }
     }
     InfiniPlots.getInstance().getPlotManager().addPlot(plotWorld.world.getUID(), plotNumber, player.getUniqueId(), ownerPlotId);
-    player.teleport(location, PlayerTeleportEvent.TeleportCause.COMMAND);
+    if (InfiniPlots.getInstance().getConfig().getBoolean(InfiniPlots.CFG_TELEPORT_AFTER_CLAIM)) {
+      player.teleport(location, PlayerTeleportEvent.TeleportCause.COMMAND);
+    }
     if (player == context.sender()) {
       context.sendMessage("Claimed plot #&b%s&r in &e%s", plotNumber, plotWorld.name);
     } else {
       context.sendMessage("Claimed plot #&b%s&r in &e%s&r for &a%s", plotNumber, plotWorld.name, player.getName());
-      player.sendMessage(ChatUtils.altColorsf("Plot #&b%s&r in &e%s%r has been claimed on your behalf from &a%s", plotNumber, plotWorld.name, context.sender().getName()));
+      player.sendMessage(ChatUtils.altColorsf("Plot #&b%s&r in &e%s&r has been claimed on your behalf from &a%s", plotNumber, plotWorld.name, context.sender().getName()));
     }
   }
 

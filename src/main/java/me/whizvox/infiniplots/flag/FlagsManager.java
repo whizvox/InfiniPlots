@@ -1,17 +1,22 @@
 package me.whizvox.infiniplots.flag;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 
 public class FlagsManager extends FlagsAdapter {
 
+  private final Map<String, Flag> defaults;
+
   public FlagsManager() {
     super(new HashMap<>());
+    defaults = new HashMap<>(DefaultFlags.ALL_FLAGS);
   }
 
-  public void setDefaults() {
-    flags.putAll(DefaultFlags.ALL_FLAGS);
+  @Override
+  public FlagValue getValue(String flag) {
+    return contains(flag) ? super.getValue(flag) : defaults.getOrDefault(flag, Flag.DENY).value();
   }
 
   public void set(Flag flag) {

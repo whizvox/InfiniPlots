@@ -25,8 +25,9 @@ public class InfiniPlotsCommandDelegator extends CommandDelegator {
     register("deny", null, new DenyCommandHandler());
     register("unclaim", null, new UnclaimCommandHandler());
     register("unclaimfor", List.of("unfor"), new UnclaimForCommandHandler());
-    register("flag", List.of("worldflag"), new WorldFlagCommandHandler());
-    register("plotflag", List.of("pflag"), new PlotFlagCommandHandler());
+    register("flag", null, new FlagCommandHandler());
+    register("worldflag", List.of("wflag", "wf"), new WorldFlagCommandHandler());
+    register("plotflag", List.of("pflag", "pf"), new PlotFlagCommandHandler());
   }
 
 }

@@ -2,10 +2,9 @@ package me.whizvox.infiniplots.event;
 
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.flag.DefaultFlags;
-import me.whizvox.infiniplots.flag.Flags;
+import me.whizvox.infiniplots.flag.FlagHelper;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChatUtils;
-import me.whizvox.infiniplots.util.ChunkPos;
 import me.whizvox.infiniplots.util.EntityTypePredicate;
 import me.whizvox.infiniplots.util.MaterialPredicate;
 import org.bukkit.Bukkit;
@@ -117,46 +116,8 @@ public class GriefPreventionEventsListener implements Listener {
       EntityType.MINECART_TNT
   );
 
-  public static boolean isPlayerActionAllowed(PlotWorld plotWorld, Player player, Location location, String flag) {
-    if (!player.hasPermission("infiniplots.bypass." + flag)) {
-      boolean allowed;
-      int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(location));
-      if (plotNumber < 1) {
-        // not in a plot
-        allowed = false;
-      } else {
-        boolean isEditor = plotWorld.isPlotEditor(player, plotNumber);
-        Flags flags = plotWorld.getPlotFlags(plotNumber);
-        // override potential world flag protection
-        if (flags.contains(flag)) {
-          allowed = flags.getValue(flag).isAllowed(isEditor);
-        } else {
-          allowed = plotWorld.worldFlags.getValue(flag).isAllowed(isEditor);
-        }
-      }
-      return allowed;
-    }
-    return true;
-  }
-
-  public static boolean isNaturalActionAllowed(PlotWorld plotWorld, Location location, String flag) {
-    ChunkPos pos = new ChunkPos(location);
-    boolean inPlot = plotWorld.generator.inPlot(pos.x(), pos.z());
-    boolean worldFlagAllowed = plotWorld.worldFlags.getValue(flag).isAllowed();
-    if (inPlot) {
-      int plotNumber = plotWorld.generator.getPlotNumber(pos);
-      Flags flags = plotWorld.getPlotFlags(plotNumber);
-      if (flags.contains(flag)) {
-        return flags.getValue(flag).isAllowed();
-      } else {
-        return worldFlagAllowed;
-      }
-    }
-    return worldFlagAllowed;
-  }
-
   private boolean checkPlayerAction(Cancellable event, PlotWorld plotWorld, Player player, Location location, String flag) {
-    boolean allowed = isPlayerActionAllowed(plotWorld, player, location, flag);
+    boolean allowed = FlagHelper.allowPlayerAction(plotWorld, player, location, flag);
     if (!allowed) {
       player.sendMessage(ChatUtils.altColors("&cNot allowed here"));
       event.setCancelled(true);
@@ -173,7 +134,7 @@ public class GriefPreventionEventsListener implements Listener {
   }
 
   private boolean checkNaturalAction(Cancellable event, PlotWorld plotWorld, Location location, String flag) {
-    boolean allowed = isNaturalActionAllowed(plotWorld, location, flag);
+    boolean allowed = FlagHelper.allowNaturalAction(plotWorld, location, flag);
     if (!allowed) {
       // TODO Add config option for this or make this smarter
       InfiniPlots.getInstance().getLogger().finer("Prohibited " + flag + " event at " + location);
@@ -231,6 +192,12 @@ public class GriefPreventionEventsListener implements Listener {
         } else if (block.getType() == Material.WATER) {
           if (item != null && BOAT_ITEMS.test(item.getType())) {
             if (!checkPlayerAction(event, player, block.getLocation(), DefaultFlags.VEHICLE_PLACE.name())) {
+              return;
+            }
+          }
+        } else if (block.getType() == Material.END_PORTAL_FRAME) {
+          if (item != null && item.getType() == Material.ENDER_EYE) {
+            if (!checkPlayerAction(event, player, block.getLocation(), DefaultFlags.END_PORTAL_CREATE.name())) {
               return;
             }
           }
@@ -448,6 +415,8 @@ public class GriefPreventionEventsListener implements Listener {
       } else {
         checkNaturalAction(event, location, DefaultFlags.SHOOT_PROJECTILE.name());
       }
+    } else if (event.getEntity().getType() == EntityType.PRIMED_TNT || event.getEntity().getType() == EntityType.MINECART_TNT) {
+      checkNaturalAction(event, event.getLocation(), DefaultFlags.ENTITY_EXPLOSION.name());
     }
   }
 
@@ -462,6 +431,7 @@ public class GriefPreventionEventsListener implements Listener {
 
   @EventHandler
   public void onDispenseEvent(BlockDispenseEvent event) {
+    // should this be a separate flag?
     checkNaturalAction(event, event.getBlock().getLocation(), DefaultFlags.ITEM_DROP.name());
   }
 
@@ -506,6 +476,29 @@ public class GriefPreventionEventsListener implements Listener {
   @EventHandler
   public void onManipulateArmorStand(PlayerArmorStandManipulateEvent event) {
     checkPlayerAction(event, event.getPlayer(), event.getRightClicked().getLocation(), DefaultFlags.INTERACT.name());
+  }
+
+  @EventHandler
+  public void onEntityExplode(EntityExplodeEvent event) {
+    if (event.getEntity() instanceof Creeper) {
+      checkNaturalAction(event, event.getLocation(), DefaultFlags.MOB_GRIEFING.name());
+    } else {
+      checkNaturalAction(event, event.getLocation(), DefaultFlags.ENTITY_EXPLOSION.name());
+    }
+  }
+
+  @EventHandler
+  public void onBlockExplode(BlockExplodeEvent event) {
+    checkNaturalAction(event, event.getBlock().getLocation(), DefaultFlags.OTHER_EXPLOSION.name());
+  }
+
+  @EventHandler
+  public void onEntityChangeBlock(EntityChangeBlockEvent event) {
+    if (event.getEntity() instanceof Player player) {
+      checkPlayerAction(event, player, event.getBlock().getLocation(), DefaultFlags.INTERACT.name());
+    } else {
+      checkNaturalAction(event, event.getBlock().getLocation(), DefaultFlags.MOB_GRIEFING.name());
+    }
   }
 
 }

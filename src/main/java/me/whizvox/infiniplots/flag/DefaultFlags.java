@@ -50,7 +50,10 @@ public class DefaultFlags {
       END_PORTAL_CREATE = new Flag("endPortalCreate", FlagValue.DENY),
       NETHER_PORTAL_ENTER = new Flag("netherPortalEnter", FlagValue.DENY),
       END_PORTAL_ENTER = new Flag("endPortalEnter", FlagValue.DENY),
-      SHOOT_PROJECTILE = new Flag("shootProjectile", FlagValue.EDITORS_ONLY);
+      SHOOT_PROJECTILE = new Flag("shootProjectile", FlagValue.EDITORS_ONLY),
+      MOB_GRIEFING = new Flag("mobGriefing", FlagValue.DENY),
+      ENTITY_EXPLOSION = new Flag("entityExplosion", FlagValue.DENY),
+      OTHER_EXPLOSION = new Flag("otherExplosion", FlagValue.DENY);
 
   public static final Map<String, Flag> ALL_FLAGS;
 

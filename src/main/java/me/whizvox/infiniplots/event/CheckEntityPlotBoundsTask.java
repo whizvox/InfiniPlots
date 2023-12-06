@@ -2,6 +2,7 @@ package me.whizvox.infiniplots.event;
 
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.flag.DefaultFlags;
+import me.whizvox.infiniplots.flag.FlagHelper;
 import me.whizvox.infiniplots.util.ChunkPos;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -27,7 +28,7 @@ public class CheckEntityPlotBoundsTask implements Runnable {
           }
           // hacky way to get around Spigot bug https://hub.spigotmc.org/jira/browse/SPIGOT-7523
           if (entity.getType() == EntityType.EXPERIENCE_ORB) {
-            if (!GriefPreventionEventsListener.isNaturalActionAllowed(plotWorld, entity.getLocation(), DefaultFlags.EXP_DROPS.name())) {
+            if (!FlagHelper.allowNaturalAction(plotWorld, entity.getLocation(), DefaultFlags.EXP_DROPS.name())) {
               entity.remove();
             }
           }
