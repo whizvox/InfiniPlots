@@ -5,6 +5,7 @@ import me.whizvox.infiniplots.command.ArgumentHelper;
 import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.command.CommandHandler;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
+import me.whizvox.infiniplots.flag.Flag;
 import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.plot.PlotWorld;
@@ -12,6 +13,7 @@ import me.whizvox.infiniplots.util.PlayerUtils;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -85,7 +87,8 @@ public class InfoCommandHandler extends CommandHandler {
         flagsString = "&b&o<none>&r";
       } else {
         flagsString = StreamSupport.stream(plot.flags().spliterator(), false)
-            .map("&b%s&r"::formatted)
+            .sorted(Comparator.comparing(Flag::name))
+            .map(flag -> "&b%s&r:&e%s&r".formatted(flag.name(), flag.value().friendlyName()))
             .collect(Collectors.joining(", "));
       }
       messages.add("- &7Flags&r: %s".formatted(flagsString));

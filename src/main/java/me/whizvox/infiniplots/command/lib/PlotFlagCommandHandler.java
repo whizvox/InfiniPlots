@@ -13,6 +13,7 @@ import me.whizvox.infiniplots.plot.PlotWorld;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class PlotFlagCommandHandler extends CommandHandler {
@@ -104,7 +105,7 @@ public class PlotFlagCommandHandler extends CommandHandler {
         if (flags.isEmpty()) {
           message.add("- &7&oThis plot has no specified flags");
         } else {
-          flags.stream().sorted().forEach(flag -> message.add("- &b%s&r: &e%s".formatted(flag.name(), flag.value().friendlyName())));
+          flags.stream().sorted(Comparator.comparing(Flag::name)).forEach(flag -> message.add("- &b%s&r: &e%s".formatted(flag.name(), flag.value().friendlyName())));
         }
         context.sendMessage(message);
       }

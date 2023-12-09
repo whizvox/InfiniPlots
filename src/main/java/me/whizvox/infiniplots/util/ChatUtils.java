@@ -47,7 +47,7 @@ public class ChatUtils {
         sb.append(ChatColor.YELLOW);
       }
       sb.append(c);
-      if (c == '>' || c == ']' || c == '|') {
+      if (c == '>' || c == '[' || c == ']' || c == '|') {
         sb.append(ChatColor.RESET);
       }
     }

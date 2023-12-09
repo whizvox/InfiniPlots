@@ -28,6 +28,9 @@ public class InfiniPlotsCommandDelegator extends CommandDelegator {
     register("flag", null, new FlagCommandHandler());
     register("worldflag", List.of("wflag", "wf"), new WorldFlagCommandHandler());
     register("plotflag", List.of("pflag", "pf"), new PlotFlagCommandHandler());
+    register("import", null, new ImportCommandHandler());
+    register("reset", null, new ResetCommandHandler());
+    register("regen", null, new RegenCommandHandler());
   }
 
 }

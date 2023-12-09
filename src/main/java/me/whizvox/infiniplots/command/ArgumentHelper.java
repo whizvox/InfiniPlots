@@ -7,8 +7,9 @@ import me.whizvox.infiniplots.exception.MissingArgumentException;
 import me.whizvox.infiniplots.flag.FlagValue;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChunkPos;
-import me.whizvox.infiniplots.util.InfPlotUtils;
+import me.whizvox.infiniplots.util.WorldUtils;
 import me.whizvox.infiniplots.util.Pair;
+import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
@@ -53,6 +54,30 @@ public class ArgumentHelper {
 
   public static int getInt(CommandContext context, int index, int min, int max) {
     return getInt(context, index, MissingArgumentException::fail, min, max);
+  }
+
+  public static int getRelativeInt(CommandContext context, int index, Supplier<Integer> origin) {
+    return getRelativeInt(context, index, MissingArgumentException::fail, origin);
+  }
+
+  public static int getRelativeInt(CommandContext context, int index, Supplier<Integer> defaultValue, Supplier<Integer> origin) {
+    return getArgument(context, index, defaultValue, s -> {
+      try {
+        if (!s.isEmpty() && s.charAt(0) == '~') {
+          int i;
+          if (s.length() == 1) {
+            i = 0;
+          } else {
+            i = Integer.parseInt(s.substring(1));
+          }
+          return origin.get() + i;
+        } else {
+          return Integer.parseInt(s);
+        }
+      } catch (NumberFormatException e) {
+        throw new InvalidCommandArgumentException("Invalid integer");
+      }
+    });
   }
 
   public static World getWorld(CommandContext context, int index, Supplier<World> defaultValue) {
@@ -129,7 +154,7 @@ public class ArgumentHelper {
   public static int getPlotNumber(CommandContext context, int index) {
     return getPlotNumber(context, index, () -> {
       Player player = context.getPlayerOrException();
-      PlotWorld plotWorld = InfPlotUtils.getPlotWorldOrDefault(player.getWorld().getUID());
+      PlotWorld plotWorld = WorldUtils.getPlotWorldOrDefault(player.getWorld().getUID());
       if (plotWorld == null) {
         throw new InterruptCommandException("Default plot world " + InfiniPlots.getInstance().getPlotManager().getDefaultWorldName() + " does not exist");
       }
@@ -177,6 +202,20 @@ public class ArgumentHelper {
 
   public static FlagValue getFlagValue(CommandContext context, int index) {
     return getFlagValue(context, index, MissingArgumentException::fail);
+  }
+
+  public static PlotWorldGenerator getGenerator(CommandContext context, int index, Supplier<PlotWorldGenerator> defaultValue) {
+    return getArgument(context, index, defaultValue, id -> {
+      PlotWorldGenerator generator = InfiniPlots.getInstance().getPlotGenRegistry().getGenerator(id);
+      if (generator == null) {
+        throw new InvalidCommandArgumentException("Unknown generator ID: " + id);
+      }
+      return generator;
+    });
+  }
+
+  public static PlotWorldGenerator getGenerator(CommandContext context, int index) {
+    return getGenerator(context, index, MissingArgumentException::fail);
   }
 
 }

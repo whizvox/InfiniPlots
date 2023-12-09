@@ -3,7 +3,7 @@ package me.whizvox.infiniplots.plot;
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.db.*;
 import me.whizvox.infiniplots.flag.Flags;
-import me.whizvox.infiniplots.util.InfPlotUtils;
+import me.whizvox.infiniplots.util.WorldUtils;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -128,8 +128,8 @@ public class PlotManager {
       if (generator != null) {
         World world = Bukkit.getWorld(props.id());
         if (world == null) {
-          File worldFolder = InfPlotUtils.getWorldFolder(props.name());
-          if (worldFolder.exists() && InfPlotUtils.isWorldFolder(worldFolder)) {
+          File worldFolder = WorldUtils.getWorldFolder(props.name());
+          if (worldFolder.exists() && WorldUtils.isWorldFolder(worldFolder)) {
             world = generator.createWorld(props.name());
           } else {
             InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Could not load plot world %s as its world folder does not exist", new Object[] {props.name()});

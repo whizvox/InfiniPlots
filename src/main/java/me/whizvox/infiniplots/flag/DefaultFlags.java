@@ -48,12 +48,13 @@ public class DefaultFlags {
       ITEM_DROP = new Flag("itemDrop", FlagValue.DENY),
       NETHER_PORTAL_CREATE = new Flag("netherPortalCreate", FlagValue.EDITORS_ONLY),
       END_PORTAL_CREATE = new Flag("endPortalCreate", FlagValue.DENY),
-      NETHER_PORTAL_ENTER = new Flag("netherPortalEnter", FlagValue.DENY),
-      END_PORTAL_ENTER = new Flag("endPortalEnter", FlagValue.DENY),
-      SHOOT_PROJECTILE = new Flag("shootProjectile", FlagValue.EDITORS_ONLY),
+      PORTAL_TELEPORT = new Flag("portalTeleport", FlagValue.DENY),
+      PROJECTILE_SHOOT = new Flag("projectileShoot", FlagValue.EDITORS_ONLY),
       MOB_GRIEFING = new Flag("mobGriefing", FlagValue.DENY),
       ENTITY_EXPLOSION = new Flag("entityExplosion", FlagValue.DENY),
-      OTHER_EXPLOSION = new Flag("otherExplosion", FlagValue.DENY);
+      OTHER_EXPLOSION = new Flag("otherExplosion", FlagValue.DENY),
+      ENTITY_DISPENSE = new Flag("entityDispense", FlagValue.ALLOW),
+      ITEM_DISPENSE = new Flag("itemDispense", FlagValue.ALLOW);
 
   public static final Map<String, Flag> ALL_FLAGS;
 

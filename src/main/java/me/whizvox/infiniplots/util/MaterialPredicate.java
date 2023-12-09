@@ -6,10 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.logging.Level;
 
@@ -42,8 +39,13 @@ public interface MaterialPredicate extends Predicate<Material> {
     return tags(List.of(tags));
   }
 
-  static MaterialPredicate and(MaterialPredicate a, MaterialPredicate b) {
-    return type -> a.test(type) && b.test(type);
+  static MaterialPredicate or(Predicate<Material> a, Predicate<Material> b) {
+    return type -> a.test(type) || b.test(type);
+  }
+
+  @SafeVarargs
+  static MaterialPredicate or(Predicate<Material>... predicates) {
+    return type -> Arrays.stream(predicates).anyMatch(predicate -> predicate.test(type));
   }
 
   static MaterialPredicate composite(Collection<Material> mats, Collection<Tag<Material>> tags) {
@@ -60,17 +62,17 @@ public interface MaterialPredicate extends Predicate<Material> {
       if (tags.isEmpty()) {
         return material(mat);
       } else if (tags.size() == 1) {
-        return and(material(mat), tag(tags.stream().findFirst().get()));
+        return or(material(mat), tag(tags.stream().findFirst().get()));
       } else {
-        return and(material(mat), tags(tags));
+        return or(material(mat), tags(tags));
       }
     } else {
       if (tags.isEmpty()) {
         return materials(mats);
       } else if (tags.size() == 1) {
-        return and(materials(mats), tag(tags.stream().findFirst().get()));
+        return or(materials(mats), tag(tags.stream().findFirst().get()));
       } else {
-        return and(materials(mats), tags(tags));
+        return or(materials(mats), tags(tags));
       }
     }
   }

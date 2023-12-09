@@ -6,11 +6,9 @@ import me.whizvox.infiniplots.flag.FlagValue;
 import me.whizvox.infiniplots.util.PlayerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.generator.WorldInfo;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Stream;
 
 public class SuggestionHelper {
@@ -40,6 +38,10 @@ public class SuggestionHelper {
     return fromStream(Bukkit.getOnlinePlayers().stream().map(Player::getName), query);
   }
 
+  public static List<String> worlds(String query) {
+    return fromStream(Bukkit.getWorlds().stream().map(WorldInfo::getName), query, true);
+  }
+
   public static List<String> plotWorlds(String query) {
     return fromStream(InfiniPlots.getInstance().getPlotManager().plotWorlds().map(pw -> pw.name), query);
   }
@@ -56,6 +58,16 @@ public class SuggestionHelper {
 
   public static List<String> flagValues(String query) {
     return fromStream(FlagValue.VALUES_MAP.keySet().stream(), query);
+  }
+
+  public static List<String> generators(String query) {
+    return fromStream(InfiniPlots.getInstance().getPlotGenRegistry().generators().map(Map.Entry::getKey), query);
+  }
+
+  public static List<String> ownerPlotNumbers(String query, UUID owner) {
+    return fromStream(InfiniPlots.getInstance().getPlotManager().getPlots(owner, false).stream()
+        .map(plot -> Integer.toString(plot.ownerPlotId())), query, false
+    );
   }
 
   public static List<String> pages(String query, int totalPages) {

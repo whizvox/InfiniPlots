@@ -7,6 +7,9 @@ import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public abstract class PlotWorldGenerator {
 
   public final int plotWidth;
@@ -59,6 +62,22 @@ public abstract class PlotWorldGenerator {
       return null;
     }
     return new Location(world, pos.x() * 16 + 7.5, 0, pos.z() * 16 - 3.5, 0, 0);
+  }
+
+  public List<ChunkPos> getPlotChunks(int plotNumber) {
+    List<ChunkPos> chunks = new ArrayList<>();
+    ChunkPos northwest = getPosition(plotNumber);
+    if (northwest != null) {
+      chunks.add(northwest);
+      for (int zOff = 0; zOff < plotWidth; zOff++) {
+        for (int xOff = 0; xOff < plotDepth; xOff++) {
+          if (xOff != 0 || zOff != 0) {
+            chunks.add(new ChunkPos(northwest.x() + xOff, northwest.z() + zOff));
+          }
+        }
+      }
+    }
+    return chunks;
   }
 
   public int getMaxClaims() {

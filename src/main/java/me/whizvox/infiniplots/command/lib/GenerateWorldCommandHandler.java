@@ -5,7 +5,7 @@ import me.whizvox.infiniplots.command.ArgumentHelper;
 import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.command.CommandHandler;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
-import me.whizvox.infiniplots.util.InfPlotUtils;
+import me.whizvox.infiniplots.util.WorldUtils;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -61,7 +61,7 @@ public class GenerateWorldCommandHandler extends CommandHandler {
     if (Bukkit.getWorld(worldName) != null) {
       throw new InterruptCommandException("World " + worldName + " already exists");
     }
-    if (InfPlotUtils.isWorldFolder(InfPlotUtils.getWorldFolder(worldName))) {
+    if (WorldUtils.isWorldFolder(WorldUtils.getWorldFolder(worldName))) {
       throw new InterruptCommandException("World folder " + worldName + " already exists");
     }
     PlotWorldGenerator gen = InfiniPlots.getInstance().getPlotGenRegistry().getGenerator(generator);
