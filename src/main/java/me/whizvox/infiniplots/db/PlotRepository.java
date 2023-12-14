@@ -7,6 +7,7 @@ import me.whizvox.infiniplots.flag.FlagsManager;
 import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.util.Page;
+import me.whizvox.infiniplots.util.ProtectionFlags;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;

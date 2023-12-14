@@ -6,11 +6,17 @@ import java.util.Objects;
 public enum FlagValue {
 
   DENY,
-  EDITORS_ONLY,
+  EDITORS_ONLY("editors"),
   ALLOW;
 
-  public String friendlyName() {
-    return Objects.requireNonNullElse(REVERSE_LOOKUP.get(this), "(unknown)");
+  public final String friendlyName;
+
+  FlagValue(String friendlyName) {
+    this.friendlyName = friendlyName;
+  }
+
+  FlagValue() {
+    this.friendlyName = toString().toLowerCase();
   }
 
   public boolean isAllowed(boolean isEditor) {
@@ -22,14 +28,9 @@ public enum FlagValue {
   }
 
   public static final Map<String, FlagValue> VALUES_MAP = Map.of(
-      "deny", DENY,
-      "editors", EDITORS_ONLY,
-      "allow", ALLOW
-  );
-  public static final Map<FlagValue, String> REVERSE_LOOKUP = Map.of(
-      DENY, "deny",
-      EDITORS_ONLY, "editors",
-      ALLOW, "allow"
+      DENY.friendlyName, DENY,
+      EDITORS_ONLY.friendlyName, EDITORS_ONLY,
+      ALLOW.friendlyName, ALLOW
   );
 
   public static FlagValue from(int ordinal) {

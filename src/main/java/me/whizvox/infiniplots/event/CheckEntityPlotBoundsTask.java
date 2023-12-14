@@ -23,13 +23,6 @@ public class CheckEntityPlotBoundsTask implements Runnable {
             ChunkPos pos = new ChunkPos(entity.getLocation());
             if (!plotWorld.generator.inPlot(pos.x(), pos.z())) {
               entity.remove();
-              return;
-            }
-          }
-          // hacky way to get around Spigot bug https://hub.spigotmc.org/jira/browse/SPIGOT-7523
-          if (entity.getType() == EntityType.EXPERIENCE_ORB) {
-            if (!FlagHelper.allowNaturalAction(plotWorld, entity.getLocation(), DefaultFlags.EXP_DROPS.name())) {
-              entity.remove();
             }
           }
         }

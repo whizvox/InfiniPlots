@@ -75,7 +75,7 @@ public class FlagCommandHandler extends CommandHandler {
         message.add("&7=== &rList of All Flags (&bflag&r:&edefault&r) &7===");
         message.add(DefaultFlags.ALL_FLAGS.values().stream()
             .sorted(Comparator.comparing(Flag::name))
-            .map(flag -> "&b%s&r:&e%s&r".formatted(flag.name(), flag.value().friendlyName()))
+            .map(flag -> "&b%s&r:&e%s&r".formatted(flag.name(), flag.value().friendlyName))
             .collect(Collectors.joining(", "))
         );
         context.sendMessage(message);
@@ -92,12 +92,12 @@ public class FlagCommandHandler extends CommandHandler {
         if (!DefaultFlags.ALL_FLAGS.containsKey(flag)) {
           context.sendMessage("- &7&oFlag is either not a valid flag or is not in the default list", flag);
         }
-        context.sendMessage("- &7World Value&r: &e%s&r%s", plotWorld.worldFlags.getValue(flag).friendlyName(), plotWorld.worldFlags.contains(flag) ? "" : " &a(default)");
+        context.sendMessage("- &7World Value&r: &e%s&r%s", plotWorld.worldFlags.getValue(flag).friendlyName, plotWorld.worldFlags.contains(flag) ? "" : " &a(default)");
         int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(player.getLocation()));
         if (plotNumber > 0) {
           Flags flags = plotWorld.getPlotFlags(plotNumber);
           if (flags.contains(flag)) {
-            context.sendMessage("- &7Plot Value&r: &e%s", flags.getValue(flag).friendlyName());
+            context.sendMessage("- &7Plot Value&r: &e%s", flags.getValue(flag).friendlyName);
           } else {
             context.sendMessage("- &7Plot Value&r: &e&o<unset>");
           }

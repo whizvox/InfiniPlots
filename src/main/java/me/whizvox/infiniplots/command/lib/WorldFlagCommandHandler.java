@@ -94,7 +94,7 @@ public class WorldFlagCommandHandler extends CommandHandler {
         }
         String flag = ArgumentHelper.getString(context, 1);
         boolean isSet = plotWorld.worldFlags.contains(flag);
-        context.sendMessage("World Flag &b%s&r: &e%s%s", flag, plotWorld.worldFlags.getValue(flag).friendlyName(), isSet ? "" : " &a(default)");
+        context.sendMessage("World Flag &b%s&r: &e%s%s", flag, plotWorld.worldFlags.getValue(flag).friendlyName, isSet ? "" : " &a(default)");
       }
       case "set" -> {
         String flag = ArgumentHelper.getString(context, 1);

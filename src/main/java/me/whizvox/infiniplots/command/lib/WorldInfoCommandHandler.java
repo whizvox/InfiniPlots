@@ -58,7 +58,7 @@ public class WorldInfoCommandHandler extends CommandHandler {
     } else {
       flagsStr = StreamSupport.stream(props.flags().spliterator(), false)
           .sorted(Comparator.comparing(Flag::name))
-          .map(flag -> "&b%s&r=&e%s&r".formatted(flag.name(), flag.value().friendlyName()))
+          .map(flag -> "&b%s&r=&e%s&r".formatted(flag.name(), flag.value().friendlyName))
           .collect(Collectors.joining(", "));
     }
     message.add("- &7Flags: %s".formatted(flagsStr));

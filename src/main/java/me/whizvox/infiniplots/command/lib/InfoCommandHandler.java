@@ -88,7 +88,7 @@ public class InfoCommandHandler extends CommandHandler {
       } else {
         flagsString = StreamSupport.stream(plot.flags().spliterator(), false)
             .sorted(Comparator.comparing(Flag::name))
-            .map(flag -> "&b%s&r:&e%s&r".formatted(flag.name(), flag.value().friendlyName()))
+            .map(flag -> "&b%s&r:&e%s&r".formatted(flag.name(), flag.value().friendlyName))
             .collect(Collectors.joining(", "));
       }
       messages.add("- &7Flags&r: %s".formatted(flagsString));
