@@ -6,6 +6,7 @@ import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.exception.MissingArgumentException;
 import me.whizvox.infiniplots.plot.Plot;
+import me.whizvox.infiniplots.util.PlotId;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
@@ -49,7 +50,7 @@ public class UnclaimForCommandHandler extends AbstractUnclaimCommandHandler {
       if (player != null) {
         String query = context.args().get(1);
         return InfiniPlots.getInstance().getPlotManager().getPlots(player.getUniqueId(), false).stream()
-            .map(plot -> String.valueOf(plot.ownerPlotId()))
+            .map(plot -> String.valueOf(plot.ownerNumber()))
             .filter(oid -> oid.startsWith(query))
             .toList();
       }
@@ -78,10 +79,10 @@ public class UnclaimForCommandHandler extends AbstractUnclaimCommandHandler {
         throw new MissingArgumentException("Must specify owner plot ID if target has more than 1 owned plot");
       }
       Plot plot = plots.get(0);
-      oid = plot.ownerPlotId();
+      oid = plot.ownerNumber();
     } else {
       oid = ArgumentHelper.getInt(context, 1, 1, Integer.MAX_VALUE);
-      Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(player.getUniqueId(), oid, false);
+      Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(PlotId.fromOwner(player.getUniqueId(), oid), false);
       if (plot == null) {
         throw new InterruptCommandException("No plot found with that ID");
       }

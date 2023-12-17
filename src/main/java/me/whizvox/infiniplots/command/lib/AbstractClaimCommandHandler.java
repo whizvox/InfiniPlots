@@ -59,7 +59,7 @@ public abstract class AbstractClaimCommandHandler extends CommandHandler {
     }
     int ownerPlotId = 1;
     for (Plot plot : plots) {
-      if (ownerPlotId == plot.ownerPlotId()) {
+      if (ownerPlotId == plot.ownerNumber()) {
         ownerPlotId++;
       }
     }

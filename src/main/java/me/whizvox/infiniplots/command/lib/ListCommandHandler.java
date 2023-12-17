@@ -105,7 +105,7 @@ public class ListCommandHandler extends CommandHandler {
             } else {
               worldStr = plotWorld.world.getName();
             }
-            message.add("- &7World: &b%s&r, &7WID&r: &e%s&r, &7OID&r: &e%s".formatted(worldStr, plot.worldPlotId(), plot.ownerPlotId()));
+            message.add("- &7World: &b%s&r, &7WNum&r: &e%s&r, &7ONum&r: &e%s".formatted(worldStr, plot.worldNumber(), plot.ownerNumber()));
           });
         }
       }
@@ -120,7 +120,7 @@ public class ListCommandHandler extends CommandHandler {
         } else {
           plots.items().forEach(plot -> {
             String ownerName = PlayerUtils.getOfflinePlayerName(plot.owner());
-            message.add("- &7WID: &b%s&r, &7Owner: &e%s&r, &7OID: &a%s".formatted(plot.worldPlotId(), ownerName, plot.ownerPlotId()));
+            message.add("- &7WNum: &b%s&r, &7Owner: &e%s&r, &7ONum: &a%s".formatted(plot.worldNumber(), ownerName, plot.ownerNumber()));
           });
         }
       }

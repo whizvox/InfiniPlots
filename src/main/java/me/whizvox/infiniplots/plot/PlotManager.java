@@ -3,6 +3,7 @@ package me.whizvox.infiniplots.plot;
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.db.*;
 import me.whizvox.infiniplots.flag.Flags;
+import me.whizvox.infiniplots.util.PlotId;
 import me.whizvox.infiniplots.util.WorldUtils;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
@@ -70,20 +71,6 @@ public class PlotManager {
   @Nullable
   public PlotWorld getPlotWorld(UUID worldId) {
     return worlds.get(worldId);
-  }
-
-  @Nullable
-  public Plot getPlot(PlotId plotId, boolean populate) {
-    return plotRepo.get(plotId.world(), plotId.plot(), populate);
-  }
-
-  @Nullable
-  public Plot getPlot(UUID ownerId, int ownerPlotId, boolean populate) {
-    return plotRepo.getOneWithOwner(ownerId, ownerPlotId, populate);
-  }
-
-  public List<Plot> getPlots(UUID ownerId, boolean populate) {
-    return plotRepo.getByOwner(ownerId, populate);
   }
 
   @Nullable
@@ -186,21 +173,24 @@ public class PlotManager {
     return plotWorld;
   }
 
-  public void deleteWorldPlotData(World world) {
-    UUID worldId = world.getUID();
-    worldRepo.delete(worldId);
-    plotRepo.removeByWorld(worldId);
+  /* ========= *
+   *   PLOTS   *
+   * ========= */
+
+  @Nullable
+  public Plot getPlot(PlotId id, boolean populate) {
+    return plotRepo.get(id, populate);
   }
 
-  public void deletePlotData(PlotId plotId) {
-    plotRepo.remove(plotId.world(), plotId.plot());
+  public List<Plot> getPlots(UUID ownerId, boolean populate) {
+    return plotRepo.getByOwner(ownerId, populate);
   }
 
   @Nullable
-  public Plot addPlot(UUID worldId, int worldPlotNumber, UUID ownerId, int ownerPlotNumber) {
+  public Plot addPlot(UUID worldId, int worldNumber, UUID ownerId, int ownerNumber) {
     PlotWorld world = worlds.get(worldId);
     if (world != null) {
-      Plot plot = new Plot(worldId, worldPlotNumber, ownerId, ownerPlotNumber, Set.of(), Flags.EMPTY);
+      Plot plot = new Plot(worldId, worldNumber, ownerId, ownerNumber, Set.of(), Flags.EMPTY);
       plotRepo.insert(plot);
       world.add(plot);
       return plot;
@@ -208,15 +198,41 @@ public class PlotManager {
     return null;
   }
 
-  public void removePlot(UUID ownerId, int ownerPlotId) {
-    Plot plot = getPlot(ownerId, ownerPlotId, false);
-    if (plot == null) {
-      return;
+  public void removePlot(PlotId plotId) {
+    Plot plot = plotRepo.get(plotId, false);
+    if (plot != null) {
+      plotRepo.remove(PlotId.fromWorld(plot));
+      Objects.requireNonNull(getPlotWorld(plot.world())).remove(plot.worldNumber());
     }
-    memberRepo.removePlot(plot.world(), plot.worldPlotId());
-    plotFlagsRepo.removePlot(plot.world(), plot.worldPlotId());
-    plotRepo.remove(plot.world(), plot.worldPlotId());
-    Objects.requireNonNull(getPlotWorld(plot.world())).remove(plot.worldPlotId());
+  }
+
+  /* =========== *
+   *   MEMBERS   *
+   * =========== */
+
+  public List<UUID> getMembers(PlotId plotId) {
+    plotId = plotRepo.getWorldBasedId(plotId);
+    return memberRepo.getMembers(plotId.world(), plotId.worldNumber());
+  }
+
+  public void addMember(PlotId plotId, UUID member) {
+    plotId = plotRepo.getWorldBasedId(plotId);
+    memberRepo.addMember(plotId.world(), plotId.worldNumber(), member);
+    getPlotWorld(plotId.world()).addEditor(plotId.worldNumber(), member);
+  }
+
+  public void removeMember(PlotId plotId, UUID memberId) {
+    plotId = plotRepo.getWorldBasedId(plotId);
+    memberRepo.removeMember(plotId.world(), plotId.worldNumber(), memberId);
+    getPlotWorld(plotId.world()).removeEditor(plotId.worldNumber(), memberId);
+  }
+
+  public void clearMembers(PlotId plotId) {
+    Plot plot = getPlot(plotId, false);
+    if (plot != null) {
+      memberRepo.removePlot(plot.world(), plot.worldNumber());
+      getPlotWorld(plot.world()).clearMembers(plot.worldNumber(), plot.owner());
+    }
   }
 
 }

@@ -6,9 +6,9 @@ import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.command.SuggestionHelper;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.plot.Plot;
-import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChunkPos;
+import me.whizvox.infiniplots.util.PlotId;
 import me.whizvox.infiniplots.util.WorldUtils;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -72,7 +72,7 @@ public class ResetCommandHandler extends AbstractRegenerateCommandHandler {
     Plot plot;
     PlotWorld plotWorld;
     if (oidSet[0]) {
-      plot = InfiniPlots.getInstance().getPlotManager().getPlot(player.getUniqueId(), oid, false);
+      plot = InfiniPlots.getInstance().getPlotManager().getPlot(PlotId.fromOwner(player.getUniqueId(), oid), false);
       if (plot == null) {
         throw new InterruptCommandException("You do not own a plot with OID of " + oid);
       }
@@ -85,23 +85,23 @@ public class ResetCommandHandler extends AbstractRegenerateCommandHandler {
       if (plotWorld == null) {
         throw new InterruptCommandException("Default world is not set");
       }
-      int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(player.getLocation()));
+      int plotNumber = plotWorld.generator.getWorldNumber(new ChunkPos(player.getLocation()));
       if (plotNumber < 1) {
         throw new InterruptCommandException("Not standing in a plot");
       }
-      plot = InfiniPlots.getInstance().getPlotManager().getPlot(new PlotId(plotWorld.world.getUID(), plotNumber), false);
+      plot = InfiniPlots.getInstance().getPlotManager().getPlot(PlotId.fromWorld(plotWorld.world.getUID(), plotNumber), false);
       if (plot == null) {
         throw new InterruptCommandException("Not standing in a plot");
       }
     }
-    return new ResetArguments(plotWorld.world, plotWorld.generator.getPlotChunks(plot.worldPlotId()), keepFlags, plot);
+    return new ResetArguments(plotWorld.world, plotWorld.generator.getPlotChunks(plot.worldNumber()), keepFlags, plot);
   }
 
   @Override
   protected void onPostConfirm(CommandContext context, Arguments args) {
     ResetArguments rArgs = (ResetArguments) args;
     if (!rArgs.keepFlags()) {
-      InfiniPlots.getInstance().getPlotManager().getPlotFlagsRepository().removePlot(args.world().getUID(), rArgs.plot().worldPlotId());
+      InfiniPlots.getInstance().getPlotManager().getPlotFlagsRepository().removePlot(args.world().getUID(), rArgs.plot().worldNumber());
     }
     context.sendMessage("&aPlot has been reset");
   }

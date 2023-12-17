@@ -3,6 +3,7 @@ package me.whizvox.infiniplots.command.lib;
 import me.whizvox.infiniplots.command.ArgumentHelper;
 import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.command.CommandHandler;
+import me.whizvox.infiniplots.command.SuggestionHelper;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.exception.NotEnoughPermissionException;
 import org.bukkit.World;
@@ -28,6 +29,14 @@ public class TeleportToWorldCommandHandler extends CommandHandler {
   @Override
   public List<String> getManual() {
     return MANUAL;
+  }
+
+  @Override
+  public List<String> listSuggestions(CommandContext context) {
+    if (context.args().size() == 1) {
+      return SuggestionHelper.worlds(context.arg(0));
+    }
+    return super.listSuggestions(context);
   }
 
   @Override

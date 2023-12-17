@@ -7,9 +7,9 @@ import me.whizvox.infiniplots.command.CommandHandler;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.flag.Flag;
 import me.whizvox.infiniplots.plot.Plot;
-import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.PlayerUtils;
+import me.whizvox.infiniplots.util.PlotId;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -63,16 +63,16 @@ public class InfoCommandHandler extends CommandHandler {
     var pair = ArgumentHelper.getWorldAndPlotNumber(context, 2);
     PlotWorld plotWorld = pair.left();
     int plotNumber = pair.right();
-    Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(new PlotId(plotWorld.world.getUID(), plotNumber), true);
+    Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(PlotId.fromWorld(plotWorld.world.getUID(), plotNumber), true);
     List<String> messages = new ArrayList<>();
     messages.add("&7===&r Information for Plot #&b%s&r in &b%s&r &7===".formatted(plotNumber, plotWorld.world.getName()));
     if (plot == null) {
       messages.add("- &7&oThis plot is unclaimed");
     } else {
       messages.add(("- &7World: &b%s".formatted(plotWorld.world.getName())));
-      messages.add("- &7Plot Number&r: &b%s".formatted(plot.worldPlotId()));
+      messages.add("- &7Plot Number&r: &b%s".formatted(plot.worldNumber()));
       messages.add("- &7Owner&r: &b%s&r (&a%s&r)".formatted(PlayerUtils.getOfflinePlayerName(plot.owner()), plot.owner()));
-      messages.add("- &7Owner ID&r: &b%d".formatted(plot.ownerPlotId()));
+      messages.add("- &7Owner Number&r: &b%d".formatted(plot.ownerNumber()));
       String membersString;
       if (plot.members().isEmpty()) {
         membersString = "&b&o<none>&r";

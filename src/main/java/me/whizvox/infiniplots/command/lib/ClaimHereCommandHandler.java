@@ -34,7 +34,7 @@ public class ClaimHereCommandHandler extends AbstractClaimCommandHandler {
     if (plotWorld == null) {
       throw new InterruptCommandException("Not in a plot");
     }
-    int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(player.getLocation()));
+    int plotNumber = plotWorld.generator.getWorldNumber(new ChunkPos(player.getLocation()));
     if (plotNumber < 1) {
       throw new InterruptCommandException("Not in a plot");
     }

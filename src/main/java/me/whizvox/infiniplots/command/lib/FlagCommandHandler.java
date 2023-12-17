@@ -93,7 +93,7 @@ public class FlagCommandHandler extends CommandHandler {
           context.sendMessage("- &7&oFlag is either not a valid flag or is not in the default list", flag);
         }
         context.sendMessage("- &7World Value&r: &e%s&r%s", plotWorld.worldFlags.getValue(flag).friendlyName, plotWorld.worldFlags.contains(flag) ? "" : " &a(default)");
-        int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(player.getLocation()));
+        int plotNumber = plotWorld.generator.getWorldNumber(new ChunkPos(player.getLocation()));
         if (plotNumber > 0) {
           Flags flags = plotWorld.getPlotFlags(plotNumber);
           if (flags.contains(flag)) {

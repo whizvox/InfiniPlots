@@ -5,9 +5,9 @@ import me.whizvox.infiniplots.command.ArgumentHelper;
 import me.whizvox.infiniplots.command.CommandContext;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.plot.Plot;
-import me.whizvox.infiniplots.plot.PlotId;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChunkPos;
+import me.whizvox.infiniplots.util.PlotId;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public class UnclaimCommandHandler extends AbstractUnclaimCommandHandler {
     if (context.sender() instanceof Player player) {
       List<String> suggestions = new ArrayList<>();
       InfiniPlots.getInstance().getPlotManager().getPlots(player.getUniqueId(), false)
-          .forEach(plot -> suggestions.add(String.valueOf(plot.ownerPlotId())));
+          .forEach(plot -> suggestions.add(String.valueOf(plot.ownerNumber())));
       return suggestions;
     }
     return super.listSuggestions(context);
@@ -55,18 +55,18 @@ public class UnclaimCommandHandler extends AbstractUnclaimCommandHandler {
       if (plotWorld == null) {
         throw new InterruptCommandException("Not in a plot");
       }
-      int wid = plotWorld.generator.getPlotNumber(new ChunkPos(player.getLocation()));
+      int wid = plotWorld.generator.getWorldNumber(new ChunkPos(player.getLocation()));
       if (wid < 1) {
         throw new InterruptCommandException("Not in a plot");
       }
-      Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(new PlotId(plotWorld.world.getUID(), wid), false);
+      Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(PlotId.fromWorld(plotWorld.world.getUID(), wid), false);
       if (plot == null || !plot.owner().equals(player.getUniqueId())) {
         throw new InterruptCommandException("You do not own this plot");
       }
-      oid = plot.ownerPlotId();
+      oid = plot.ownerNumber();
     } else {
       oid = ArgumentHelper.getInt(context, 0, 1, Integer.MAX_VALUE);
-      Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(player.getUniqueId(), oid, false);
+      Plot plot = InfiniPlots.getInstance().getPlotManager().getPlot(PlotId.fromOwner(player.getUniqueId(), oid), false);
       if (plot == null) {
         throw new InterruptCommandException("No plot found with OID of " + oid);
       }

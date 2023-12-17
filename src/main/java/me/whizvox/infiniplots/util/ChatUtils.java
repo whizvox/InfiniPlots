@@ -64,4 +64,8 @@ public class ChatUtils {
     }
   }
 
+  public static String header(String title) {
+    return "&7=== &6" + title + " &7===";
+  }
+
 }

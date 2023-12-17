@@ -5,6 +5,7 @@ import me.whizvox.infiniplots.flag.DefaultFlags;
 import me.whizvox.infiniplots.flag.FlagValue;
 import me.whizvox.infiniplots.util.PlayerUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.WorldInfo;
 
@@ -38,6 +39,10 @@ public class SuggestionHelper {
     return fromStream(Bukkit.getOnlinePlayers().stream().map(Player::getName), query);
   }
 
+  public static List<String> offlinePlayerNames(String query) {
+    return fromStream(Arrays.stream(Bukkit.getOfflinePlayers()).map(OfflinePlayer::getName), query);
+  }
+
   public static List<String> worlds(String query) {
     return fromStream(Bukkit.getWorlds().stream().map(WorldInfo::getName), query, true);
   }
@@ -65,8 +70,8 @@ public class SuggestionHelper {
   }
 
   public static List<String> ownerPlotNumbers(String query, UUID owner) {
-    return fromStream(InfiniPlots.getInstance().getPlotManager().getPlots(owner, false).stream()
-        .map(plot -> Integer.toString(plot.ownerPlotId())), query, false
+    return fromStream(InfiniPlots.getInstance().getPlotManager().getPlotRepository().getOwnedPlots(owner).stream()
+        .map(String::valueOf), query, false
     );
   }
 

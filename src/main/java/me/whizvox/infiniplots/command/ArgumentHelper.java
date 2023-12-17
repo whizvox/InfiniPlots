@@ -5,10 +5,9 @@ import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.exception.InvalidCommandArgumentException;
 import me.whizvox.infiniplots.exception.MissingArgumentException;
 import me.whizvox.infiniplots.flag.FlagValue;
+import me.whizvox.infiniplots.plot.Plot;
 import me.whizvox.infiniplots.plot.PlotWorld;
-import me.whizvox.infiniplots.util.ChunkPos;
-import me.whizvox.infiniplots.util.WorldUtils;
-import me.whizvox.infiniplots.util.Pair;
+import me.whizvox.infiniplots.util.*;
 import me.whizvox.infiniplots.worldgen.PlotWorldGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -16,6 +15,8 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -158,7 +159,7 @@ public class ArgumentHelper {
       if (plotWorld == null) {
         throw new InterruptCommandException("Default plot world " + InfiniPlots.getInstance().getPlotManager().getDefaultWorldName() + " does not exist");
       }
-      int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(player.getLocation()));
+      int plotNumber = plotWorld.generator.getWorldNumber(new ChunkPos(player.getLocation()));
       if (plotNumber < 1) {
         throw new InterruptCommandException("No plot found");
       }
@@ -169,7 +170,7 @@ public class ArgumentHelper {
   public static Pair<PlotWorld, Integer> getWorldAndPlotNumber(CommandContext context, int index) {
     PlotWorld plotWorld = getPlotWorld(context, index + 1);
     int plotNumber = getPlotNumber(context, index, () -> {
-      int res = plotWorld.generator.getPlotNumber(new ChunkPos(context.getPlayerOrException().getLocation()));
+      int res = plotWorld.generator.getWorldNumber(new ChunkPos(context.getPlayerOrException().getLocation()));
       if (res < 1) {
         throw new InterruptCommandException("Not in a plot");
       }
@@ -216,6 +217,36 @@ public class ArgumentHelper {
 
   public static PlotWorldGenerator getGenerator(CommandContext context, int index) {
     return getGenerator(context, index, MissingArgumentException::fail);
+  }
+
+  public static PlotId getPlotId(CommandContext context, int index, Supplier<PlotId> defaultValue) {
+    String str = getString(context, index, () -> null);
+    if (str == null) {
+      return defaultValue.get();
+    }
+    return PlotId.fromString(context.sender(), str);
+  }
+
+  public static PlotId getPlotIdOrStanding(CommandContext context, int index) {
+    return getPlotId(context, index, () -> {
+      PlotWorld plotWorld = CommandHelper.getPlotWorld(context.getPlayerOrException());
+      int worldNumber = CommandHelper.getWorldNumber(plotWorld, context.getPlayerOrException());
+      return PlotId.fromWorld(plotWorld.world.getUID(), worldNumber);
+    });
+  }
+
+  public static PlotId getPlotIdOrFirstOwned(CommandContext context, int index) {
+    return getPlotId(context, index, () -> {
+      UUID ownerId = context.getPlayerOrException().getUniqueId();
+      List<Integer> plots = InfiniPlots.getInstance().getPlotManager().getPlotRepository().getOwnedPlots(ownerId);
+      if (plots.isEmpty()) {
+        throw new InterruptCommandException("You do not own any plots");
+      }
+      if (plots.size() != 1) {
+        throw new InterruptCommandException("Must specify a plot ID");
+      }
+      return PlotId.fromOwner(ownerId, plots.get(0));
+    });
   }
 
 }

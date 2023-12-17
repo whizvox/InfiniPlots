@@ -10,7 +10,7 @@ public class FlagHelper {
   public static boolean allowPlayerAction(PlotWorld plotWorld, Player player, Location location, String flag) {
     if (!player.hasPermission("infiniplots.bypass." + flag)) {
       boolean allowed;
-      int plotNumber = plotWorld.generator.getPlotNumber(new ChunkPos(location));
+      int plotNumber = plotWorld.generator.getWorldNumber(new ChunkPos(location));
       if (plotNumber < 1) {
         // not in a plot
         allowed = false;
@@ -34,7 +34,7 @@ public class FlagHelper {
     boolean inPlot = plotWorld.generator.inPlot(pos.x(), pos.z());
     boolean worldFlagAllowed = plotWorld.worldFlags.getValue(flag).isAllowed();
     if (inPlot) {
-      int plotNumber = plotWorld.generator.getPlotNumber(pos);
+      int plotNumber = plotWorld.generator.getWorldNumber(pos);
       Flags flags = plotWorld.getPlotFlags(plotNumber);
       if (flags.contains(flag)) {
         return flags.getValue(flag).isAllowed();

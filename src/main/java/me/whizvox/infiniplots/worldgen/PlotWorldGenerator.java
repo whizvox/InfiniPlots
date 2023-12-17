@@ -40,7 +40,7 @@ public abstract class PlotWorldGenerator {
     return inPlotX(chunkX) && inPlotZ(chunkZ);
   }
 
-  public int getPlotNumber(ChunkPos pos) {
+  public int getWorldNumber(ChunkPos pos) {
     if (!inPlot(pos.x(), pos.z())) {
       return 0;
     }

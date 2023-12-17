@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PlotWorld {
 
@@ -34,6 +35,30 @@ public class PlotWorld {
 
   public Map<Integer, Set<UUID>> getAllEditors() {
     return Collections.unmodifiableMap(allEditors);
+  }
+
+  public void addEditor(int worldNumber, UUID memberId) {
+    Set<UUID> newMembers = new HashSet<>();
+    Set<UUID> members = allEditors.get(worldNumber);
+    if (members != null) {
+      newMembers.addAll(members);
+    }
+    newMembers.add(memberId);
+    allEditors.put(worldNumber, Collections.unmodifiableSet(newMembers));
+  }
+
+  public void removeEditor(int worldNumber, UUID memberId) {
+    Set<UUID> members = allEditors.get(worldNumber);
+    if (members != null) {
+      allEditors.put(worldNumber, members.stream().filter(it -> !it.equals(memberId)).collect(Collectors.toSet()));
+    }
+  }
+
+  public void clearMembers(int worldNumber, UUID ownerId) {
+    Set<UUID> members = allEditors.get(worldNumber);
+    if (members != null) {
+      allEditors.put(worldNumber, Set.of(ownerId));
+    }
   }
 
   public Flags getWorldFlags() {
@@ -71,16 +96,16 @@ public class PlotWorld {
   }
 
   public boolean isPlotEditor(Player player, Location location) {
-    int plotNum = generator.getPlotNumber(new ChunkPos(location));
+    int plotNum = generator.getWorldNumber(new ChunkPos(location));
     return isPlotEditor(player, plotNum);
   }
 
   public void add(Plot plot) {
     Set<UUID> editors = new HashSet<>(plot.members());
     editors.add(plot.owner());
-    allEditors.put(plot.worldPlotId(), Collections.unmodifiableSet(editors));
+    allEditors.put(plot.worldNumber(), Collections.unmodifiableSet(editors));
     if (!plot.flags().isEmpty()) {
-      plotFlags.put(plot.worldPlotId(), plot.flags());
+      plotFlags.put(plot.worldNumber(), plot.flags());
     }
   }
 
