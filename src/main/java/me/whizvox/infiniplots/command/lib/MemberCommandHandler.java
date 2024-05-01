@@ -31,7 +31,7 @@ public class MemberCommandHandler extends CommandHandler {
   private static final List<String> MANUAL = List.of(
       "Manages members for your plot. Members have the same build permissions as the owner of a plot.",
       "Examples:",
-      "- &b/infiniplots member list&r : List all members for the plot you're standing in",
+      "- &b/infiniplots member list&r : List all members for the one plot you own",
       "- &b/infiniplots member add Bob123&r : Add a player to the members list of the plot you're standing in",
       "- &b/infiniplots member remove Bob123 3&r : Remove a member from your 3rd plot"
   );

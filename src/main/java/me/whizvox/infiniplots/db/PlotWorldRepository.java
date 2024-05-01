@@ -66,7 +66,7 @@ public class PlotWorldRepository extends Repository {
   }
 
   public void updateLockdownLevel(UUID worldId, LockdownLevel lockdown) {
-    executeUpdate(UPDATE_LOCKDOWN, List.of(worldId, lockdown));
+    executeUpdate(UPDATE_LOCKDOWN, List.of(lockdown, worldId));
   }
 
   public void delete(UUID worldId) {

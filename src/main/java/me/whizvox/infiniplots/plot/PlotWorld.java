@@ -18,16 +18,18 @@ public class PlotWorld {
   public final World world;
   public int nextPlotNumber;
   public final FlagsManager worldFlags;
+  public LockdownLevel lockdownLevel;
 
   private final Map<Integer, Set<UUID>> allEditors;
   private final Map<Integer, Flags> plotFlags;
 
-  public PlotWorld(String name, PlotWorldGenerator generator, World world) {
+  public PlotWorld(String name, PlotWorldGenerator generator, World world, LockdownLevel lockdownLevel) {
     this.name = name;
     this.generator = generator;
     this.world = world;
     nextPlotNumber = 1;
     worldFlags = new FlagsManager();
+    this.lockdownLevel = lockdownLevel;
 
     allEditors = new HashMap<>();
     plotFlags = new HashMap<>();

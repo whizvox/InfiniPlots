@@ -125,7 +125,7 @@ public class PlotManager {
         }
         // possible for this to fail when loading via the world folder
         if (props.id().equals(world.getUID())) {
-          PlotWorld plotWorld = new PlotWorld(props.name(), generator, world);
+          PlotWorld plotWorld = new PlotWorld(props.name(), generator, world, props.lockdown());
           plotWorld.worldFlags.set(props.flags());
           plotWorld.nextPlotNumber = plotRepo.getLastPlotNumber(props.id()) + 1;
           worlds.put(props.id(), plotWorld);
@@ -164,7 +164,7 @@ public class PlotManager {
     if (generatorKey == null) {
       throw new IllegalArgumentException("Attempted to use unregistered generator of type " + generator.getClass());
     }
-    PlotWorld plotWorld = new PlotWorld(world.getName(), generator, world);
+    PlotWorld plotWorld = new PlotWorld(world.getName(), generator, world, LockdownLevel.OFF);
     // TODO Implement default world flags via config file
     if (writeToDatabase) {
       worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, LockdownLevel.OFF, Flags.EMPTY));

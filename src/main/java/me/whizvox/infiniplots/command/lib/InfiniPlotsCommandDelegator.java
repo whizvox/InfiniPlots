@@ -32,6 +32,7 @@ public class InfiniPlotsCommandDelegator extends CommandDelegator {
     register("reset", null, new ResetCommandHandler());
     register("regen", null, new RegenCommandHandler());
     register("member", List.of("mem"), new MemberCommandHandler());
+    register("lockdown", null, new LockdownCommandHandler());
   }
 
 }
