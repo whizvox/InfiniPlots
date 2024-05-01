@@ -3,6 +3,7 @@ package me.whizvox.infiniplots.event;
 import me.whizvox.infiniplots.InfiniPlots;
 import me.whizvox.infiniplots.flag.DefaultFlags;
 import me.whizvox.infiniplots.flag.FlagHelper;
+import me.whizvox.infiniplots.plot.LockdownLevel;
 import me.whizvox.infiniplots.plot.PlotWorld;
 import me.whizvox.infiniplots.util.ChatUtils;
 import me.whizvox.infiniplots.util.EntityTypePredicate;
@@ -19,10 +20,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
 import org.bukkit.event.entity.*;
-import org.bukkit.event.player.PlayerArmorStandManipulateEvent;
-import org.bukkit.event.player.PlayerInteractEntityEvent;
-import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.*;
 import org.bukkit.event.vehicle.VehicleDamageEvent;
 import org.bukkit.event.vehicle.VehicleDestroyEvent;
 import org.bukkit.event.vehicle.VehicleEnterEvent;
@@ -129,6 +127,12 @@ public class GriefPreventionEventsListener implements Listener {
       Material.ZOMBIFIED_PIGLIN_SPAWN_EGG
   );
 
+  private static final Predicate<Material> BUCKET_ITEMS = MaterialPredicate.materials(
+      Material.BUCKET, Material.AXOLOTL_BUCKET, Material.COD_BUCKET, Material.LAVA_BUCKET, Material.POWDER_SNOW_BUCKET,
+      Material.PUFFERFISH_BUCKET, Material.SALMON_BUCKET, Material.TADPOLE_BUCKET, Material.TROPICAL_FISH_BUCKET,
+      Material.WATER_BUCKET
+  );
+
   private static final Predicate<Material> ENTITY_DISPENSE_ITEMS = MaterialPredicate.or(
       MaterialPredicate.composite(
           Material.ARMOR_STAND,
@@ -232,12 +236,6 @@ public class GriefPreventionEventsListener implements Listener {
               return;
             }
           }
-        } else if (block.getType() == Material.WATER) {
-          if (item != null && BOAT_ITEMS.test(item.getType())) {
-            if (!checkPlayerAction(event, player, block.getLocation(), DefaultFlags.VEHICLE_PLACE.name())) {
-              return;
-            }
-          }
         } else if (block.getType() == Material.END_PORTAL_FRAME) {
           if (item != null && item.getType() == Material.ENDER_EYE) {
             if (!checkPlayerAction(event, player, block.getLocation(), DefaultFlags.END_PORTAL_CREATE.name())) {
@@ -252,6 +250,16 @@ public class GriefPreventionEventsListener implements Listener {
       }
     }
     if (item != null) {
+      if (BUCKET_ITEMS.test(item.getType()) || item.getType() == Material.ARMOR_STAND) {
+        if (!checkPlayerAction(event, player, player.getLocation(), DefaultFlags.BUILD.name())) {
+          return;
+        }
+      }
+      if (BOAT_ITEMS.test(item.getType())) {
+        if (!checkPlayerAction(event, player, player.getLocation(), DefaultFlags.VEHICLE_PLACE.name())) {
+          return;
+        }
+      }
       if (item.getType() == Material.SPLASH_POTION || item.getType() == Material.LINGERING_POTION) {
         if (!checkPlayerAction(event, player, player.getLocation(), DefaultFlags.POTION_SPLASH.name())) {
           return;
@@ -545,6 +553,15 @@ public class GriefPreventionEventsListener implements Listener {
       checkPlayerAction(event, player, event.getBlock().getLocation(), DefaultFlags.INTERACT.name());
     } else {
       checkNaturalAction(event, event.getBlock().getLocation(), DefaultFlags.MOB_GRIEFING.name());
+    }
+  }
+
+  @EventHandler
+  public void onPlayerTeleport(PlayerTeleportEvent event) {
+    PlotWorld plotWorld = InfiniPlots.getInstance().getPlotManager().getPlotWorld(event.getTo().getWorld().getUID());
+    if (plotWorld != null && plotWorld.lockdownLevel == LockdownLevel.ENTER && !event.getPlayer().hasPermission("infiniplots.lockdown.bypass.enter")) {
+      event.getPlayer().sendMessage(ChatUtils.altColorsf("Plot world &e%s&r is currently in lockdown", plotWorld.name));
+      event.setCancelled(true);
     }
   }
 

@@ -46,6 +46,7 @@ public class PermissionsCommand extends CommandHandler {
       build("list.worlds", "Allow listing of plot worlds"),
       build("list.generators", "Allow listing of plot world generators"),
       build("lockdown", "Allow setting lockdown status of a plot world"),
+      build("lockdown.bypass.<level>", "Allow a player to bypass the lockdown restrictions of a plot world"),
       build("manual", "Allow usage of the &emanual&r command"),
       build("manual.<command>", "Allow viewing manual of a specific command"),
       build("permissions", "Allow listing of plugin permissions (the &epermissions&r command)"),

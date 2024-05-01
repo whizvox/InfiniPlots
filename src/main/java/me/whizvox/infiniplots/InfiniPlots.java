@@ -36,8 +36,8 @@ public final class InfiniPlots extends JavaPlugin {
       CFG_CHECK_PLOT_ENTITY_BOUNDS = "checkPlotEntityBounds",
       CFG_CHECK_EXP_ORBS = "checkExpOrbs",
       CFG_TELEPORT_AFTER_CLAIM = "teleportAfterClaim",
-      CFG_DEFAULT_WORLD_FLAGS = "defaultWorldFlags"/*,
-      CFG_USE_WORLDGUARD = "useWorldGuard"*/;
+      CFG_DEFAULT_WORLD_FLAGS = "defaultWorldFlags",
+      CFG_KICK_DESTINATION_WORLD = "kickDestinationWorld";
 
   private static InfiniPlots instance = null;
 
@@ -89,7 +89,7 @@ public final class InfiniPlots extends JavaPlugin {
     getConfig().addDefault(CFG_CHECK_EXP_ORBS, 0);
     getConfig().addDefault(CFG_TELEPORT_AFTER_CLAIM, false);
     getConfig().addDefault(CFG_DEFAULT_WORLD_FLAGS, ProtectionFlags.DEFAULT);
-    //getConfig().addDefault(CFG_USE_WORLDGUARD, false);
+    getConfig().addDefault(CFG_KICK_DESTINATION_WORLD, "world");
 
     getConfig().options().copyDefaults(true);
 
@@ -111,10 +111,7 @@ public final class InfiniPlots extends JavaPlugin {
     ));
     getConfig().setComments(CFG_TELEPORT_AFTER_CLAIM, List.of("After claiming a plot, teleport the owner to it"));
     getConfig().setComments(CFG_DEFAULT_WORLD_FLAGS, List.of("Default protection flags used for all worlds"));
-    /*getConfig().setComments(CFG_USE_WORLDGUARD, List.of(
-        "Use WorldGuard regions to handle plot world interactions",
-        "If false or if WorldGuard is not loaded, InfiniPlots will use its own event handlers"
-    ));*/
+    getConfig().setComments(CFG_KICK_DESTINATION_WORLD, List.of("The world to send a player if they kicked from a plot world."));
     saveConfig();
 
     ownerTiers = getConfig().getSerializable(CFG_PLOT_OWNER_TIERS, PlotOwnerTiers.class).tiers;

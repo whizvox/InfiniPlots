@@ -30,6 +30,8 @@ public class PlotManager {
 
   private String defaultWorldName;
   private PlotWorld defaultWorld;
+  private String kickDestinationWorldName;
+  private World kickDestinationWorld;
 
   public PlotManager(Connection conn) {
     worlds = new HashMap<>();
@@ -42,6 +44,8 @@ public class PlotManager {
 
     defaultWorldName = null;
     defaultWorld = null;
+    kickDestinationWorldName = null;
+    kickDestinationWorld = null;
   }
 
   public PlotRepository getPlotRepository() {
@@ -81,6 +85,14 @@ public class PlotManager {
   @Nullable
   public PlotWorld getDefaultWorld() {
     return defaultWorld;
+  }
+
+  public String getKickDestinationWorldName() {
+    return kickDestinationWorldName;
+  }
+
+  public World getKickDestinationWorld() {
+    return kickDestinationWorld;
   }
 
   /**
@@ -150,6 +162,23 @@ public class PlotManager {
         }
       }
     }, true);
+    if (defaultWorld == null) {
+      if (worlds.size() == 1) {
+        String oldDefaultWorldName = defaultWorldName;
+        defaultWorld = worlds.values().stream().findFirst().get();
+        defaultWorldName = defaultWorld.name;
+        InfiniPlots.getInstance().getConfig().set(InfiniPlots.CFG_DEFAULT_PLOT_WORLD, defaultWorldName);
+        InfiniPlots.getInstance().saveConfig();
+        InfiniPlots.getInstance().getLogger().log(Level.INFO, "Default plot world %s either not found or isn't a plot world, setting it to %s instead", new Object[] {oldDefaultWorldName, defaultWorldName});
+      } else {
+        InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Default plot world %s either not found or isn't a plot world", defaultWorldName);
+      }
+    }
+    kickDestinationWorldName = InfiniPlots.getInstance().getConfig().getString(InfiniPlots.CFG_KICK_DESTINATION_WORLD);
+    kickDestinationWorld = Bukkit.getWorld(kickDestinationWorldName);
+    if (kickDestinationWorld == null) {
+      InfiniPlots.getInstance().getLogger().log(Level.WARNING, "Kick destination world %s does not exist", kickDestinationWorldName);
+    }
   }
 
   @Nullable
@@ -165,11 +194,17 @@ public class PlotManager {
       throw new IllegalArgumentException("Attempted to use unregistered generator of type " + generator.getClass());
     }
     PlotWorld plotWorld = new PlotWorld(world.getName(), generator, world, LockdownLevel.OFF);
-    // TODO Implement default world flags via config file
     if (writeToDatabase) {
-      worldRepo.insert(new PlotWorldProperties(worldId, world.getName(), generatorKey, LockdownLevel.OFF, Flags.EMPTY));
+      worldRepo.insert(new PlotWorldProperties(worldId, plotWorld.name, generatorKey, plotWorld.lockdownLevel, Flags.EMPTY));
     }
     worlds.put(worldId, plotWorld);
+    if (defaultWorld == null && worlds.size() == 1) {
+      defaultWorld = plotWorld;
+      defaultWorldName = defaultWorld.name;
+      InfiniPlots.getInstance().getConfig().set(InfiniPlots.CFG_DEFAULT_PLOT_WORLD, defaultWorldName);
+      InfiniPlots.getInstance().saveConfig();
+      InfiniPlots.getInstance().getLogger().log(Level.INFO, "Setting default plot world to %s", new Object[] {defaultWorldName});
+    }
     return plotWorld;
   }
 

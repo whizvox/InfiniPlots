@@ -8,6 +8,8 @@ import me.whizvox.infiniplots.command.SuggestionHelper;
 import me.whizvox.infiniplots.exception.InterruptCommandException;
 import me.whizvox.infiniplots.plot.LockdownLevel;
 import me.whizvox.infiniplots.plot.PlotWorld;
+import me.whizvox.infiniplots.util.ChatUtils;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 
 import java.util.ArrayList;
@@ -87,9 +89,20 @@ public class LockdownCommandHandler extends CommandHandler {
     });
   }
 
-  private void setLockdownStatus(PlotWorld plotWorld, LockdownLevel level) {
+  public static void setLockdownStatus(PlotWorld plotWorld, LockdownLevel level) {
     plotWorld.lockdownLevel = level;
     InfiniPlots.getInstance().getPlotManager().getWorldRepository().updateLockdownLevel(plotWorld.world.getUID(), level);
+    if (level == LockdownLevel.ENTER) {
+      plotWorld.world.getPlayers().forEach(player -> {
+        if (!player.hasPermission("infiniplots.lockdown.bypass.enter")) {
+          World destWorld = InfiniPlots.getInstance().getPlotManager().getKickDestinationWorld();
+          if (destWorld != null && !destWorld.getUID().equals(plotWorld.world.getUID())) {
+            player.sendMessage(ChatUtils.altColorsf("Plot world &e%s&r is in lockdown", plotWorld.name));
+            player.teleport(destWorld.getSpawnLocation());
+          }
+        }
+      });
+    }
   }
 
 }
